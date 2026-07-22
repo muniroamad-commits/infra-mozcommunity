@@ -52,13 +52,27 @@
       "name": "Novo Registo",
       "short_name": "Novo",
       "description": "Criar novo registo de infraestrutura",
-      "url": "/?tab=novo"
+      "url": "/?tab=novo",
+      "icons": [
+        {
+          "src": "shortcut-novo.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Meus Registos",
       "short_name": "Registos",
       "description": "Ver meus registos de campo",
-      "url": "/?tab=lista"
+      "url": "/?tab=lista",
+      "icons": [
+        {
+          "src": "shortcut-lista.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     }
   ],
   "share_target": {

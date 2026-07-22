@@ -1,5 +1,5 @@
 // MozCommunity Service Worker v10 - Rede primeiro (sempre atualizado), cache como reserva offline
-const CACHE_NAME = 'mozcommunity-v11';
+const CACHE_NAME = 'mozcommunity-v12';
 const urlsToCache = [
   './',
   './index.html',
@@ -11,6 +11,8 @@ const urlsToCache = [
   './favicon-16.png',
   './screenshot-wide.png',
   './screenshot-narrow.png',
+  './shortcut-novo.png',
+  './shortcut-lista.png',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js',
