@@ -245,7 +245,14 @@
 
                     <div class="form-group">
                         <label>Fotos</label>
-                        <input type="file" id="photoInput" accept="image/*" multiple onchange="addPhotoPreview(event)">
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn" style="background:#6c757d; flex:1;" onclick="document.getElementById('photoInputFile').click()">📁 Escolher Ficheiro</button>
+                            <button type="button" class="btn" style="background:#28a745; flex:1;" onclick="document.getElementById('photoInputCamera').click()">📷 Abrir Câmara</button>
+                        </div>
+                        <!-- Escolher da galeria/ficheiros -->
+                        <input type="file" id="photoInputFile" accept="image/*" multiple style="display:none;" onchange="addPhotoPreview(event)">
+                        <!-- Abre a câmara diretamente (capture=environment = câmara traseira) -->
+                        <input type="file" id="photoInputCamera" accept="image/*" capture="environment" style="display:none;" onchange="addPhotoPreview(event)">
                         <div id="photoPreview" class="photo-grid"></div>
                     </div>
 
@@ -324,8 +331,13 @@
                     <textarea id="visitObservacoes" rows="3" placeholder="Anotações desta visita..."></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Tirar Foto</label>
-                    <input type="file" id="visitPhotoInput" accept="image/*" multiple onchange="addVisitPhotoPreview(event)">
+                    <label>Fotos</label>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn" style="background:#6c757d; flex:1;" onclick="document.getElementById('visitPhotoInputFile').click()">📁 Escolher Ficheiro</button>
+                        <button type="button" class="btn" style="background:#28a745; flex:1;" onclick="document.getElementById('visitPhotoInputCamera').click()">📷 Abrir Câmara</button>
+                    </div>
+                    <input type="file" id="visitPhotoInputFile" accept="image/*" multiple style="display:none;" onchange="addVisitPhotoPreview(event)">
+                    <input type="file" id="visitPhotoInputCamera" accept="image/*" capture="environment" style="display:none;" onchange="addVisitPhotoPreview(event)">
                     <div id="visitPhotoPreview" class="photo-grid"></div>
                 </div>
                 <button type="submit" class="btn btn-success">Guardar Visita</button>

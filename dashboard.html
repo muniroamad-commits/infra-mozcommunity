@@ -472,10 +472,41 @@
                 if (!leafletMap) {
                     // Centro aproximado do norte de Moçambique (Cabo Delgado/Nampula/Niassa)
                     leafletMap = L.map('mapContainer').setView([-13.0, 39.0], 6);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+
+                    // Camadas de mapa disponíveis (todas gratuitas, sem chave de API)
+                    const camadaRuas = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         attribution: '© OpenStreetMap contributors',
-                        maxZoom: 18
-                    }).addTo(leafletMap);
+                        maxZoom: 19
+                    });
+
+                    const camadaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: '© Esri, Maxar, Earthstar Geographics',
+                        maxZoom: 19
+                    });
+
+                    const camadaRelevo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenTopoMap contributors',
+                        maxZoom: 17
+                    });
+
+                    // Camada extra: rótulos (nomes de ruas/lugares) por cima do satélite
+                    const camadaRotulos = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: '',
+                        maxZoom: 19
+                    });
+
+                    camadaRuas.addTo(leafletMap); // camada inicial por defeito
+
+                    const baseMaps = {
+                        "🗺️ Ruas": camadaRuas,
+                        "🛰️ Satélite": camadaSatelite,
+                        "⛰️ Relevo": camadaRelevo
+                    };
+                    const overlayMaps = {
+                        "🏷️ Nomes de Lugares (sobre satélite)": camadaRotulos
+                    };
+
+                    L.control.layers(baseMaps, overlayMaps, { collapsed: false, position: 'topright' }).addTo(leafletMap);
                 }
                 // Leaflet precisa disto quando o container estava escondido (display:none) e agora fica visível
                 setTimeout(() => leafletMap.invalidateSize(), 100);
