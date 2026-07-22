@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MozCommunity - Painel do Administrador</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; }
+
+        /* LOGIN */
+        .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #185FA5 0%, #0C447C 100%); }
+        .login-box { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); width: 100%; max-width: 380px; }
+        .login-box h1 { text-align: center; color: #185FA5; margin-bottom: 8px; font-size: 22px; }
+        .login-box .subtitle { text-align: center; color: #999; font-size: 13px; margin-bottom: 25px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 13px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #185FA5; box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.1); }
+        .btn { width: 100%; padding: 12px; background: #185FA5; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        .btn:hover { background: #0C447C; }
+        .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 6px; margin-bottom: 15px; display: none; font-size: 13px; }
+        .error.show { display: block; }
+        .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 6px; margin-bottom: 15px; display: none; font-size: 13px; }
+        .success.show { display: block; }
+
+        /* DASHBOARD */
+        .dash-container { display: none; flex-direction: column; height: 100vh; }
+        .dash-container.show { display: flex; }
+        .header { background: linear-gradient(135deg, #185FA5 0%, #0C447C 100%); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .header h1 { font-size: 18px; }
+        .header .live-dot { font-size: 11px; font-weight: 400; color: #90ee90; }
+        .btn-logout { background: #dc3545; padding: 8px 14px; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+
+        .toolbar { background: white; padding: 12px 20px; display: flex; gap: 10px; flex-wrap: wrap; border-bottom: 1px solid #ddd; }
+        .toolbar select, .toolbar input { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+
+        .nav-tab { padding: 12px 16px; background: none; border: none; cursor: pointer; font-weight: 600; color: #999; border-bottom: 3px solid transparent; font-size: 13px; }
+        .nav-tab.active { color: #185FA5; border-bottom-color: #185FA5; }
+
+        .account-card { background: white; border: 1px solid #eee; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .account-info h4 { font-size: 14px; color: #333; }
+        .account-info p { font-size: 12px; color: #999; }
+        .account-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-small { padding: 6px 12px; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600; }
+        .btn-toggle-admin { background: #e2e3ff; color: #3f3fb0; }
+        .btn-toggle-admin.is-admin { background: #185FA5; color: white; }
+        .btn-toggle-ativo { background: #d4edda; color: #155724; }
+        .btn-toggle-ativo.inativo { background: #f8d7da; color: #721c24; }
+
+        .stats-bar { display: flex; gap: 10px; padding: 12px 20px; flex-wrap: wrap; background: #fafafa; }
+        .stat-card { background: white; border: 1px solid #eee; border-radius: 8px; padding: 10px 16px; text-align: center; min-width: 90px; }
+        .stat-card .num { font-size: 20px; font-weight: 700; color: #185FA5; }
+        .stat-card .label { font-size: 11px; color: #999; }
+
+        .content { flex: 1; overflow-y: auto; padding: 20px; }
+        .records-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+        .record-card { background: white; border: 1px solid #eee; border-radius: 10px; padding: 16px; cursor: pointer; transition: box-shadow 0.2s; }
+        .record-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
+        .record-card h3 { color: #185FA5; margin-bottom: 6px; font-size: 15px; }
+        .record-card p { font-size: 12px; color: #666; margin: 3px 0; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge-planejado { background: #e9ecef; color: #495057; }
+        .badge-construcao { background: #fff3cd; color: #856404; }
+        .badge-concluido { background: #d4edda; color: #155724; }
+        .empty-state { text-align: center; color: #999; padding: 60px 20px; }
+
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 15px; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; border-radius: 10px; padding: 24px; max-width: 560px; width: 100%; max-height: 85vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #eee; padding-bottom: 12px; }
+        .modal-header h2 { font-size: 17px; color: #185FA5; }
+        .close-btn { background: none; border: none; font-size: 26px; cursor: pointer; color: #999; }
+        .detail-row { font-size: 13px; margin-bottom: 6px; }
+        .detail-row strong { color: #444; }
+        .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; margin: 8px 0; }
+        .photo-item { aspect-ratio: 1; border-radius: 6px; overflow: hidden; }
+        .photo-item img { width: 100%; height: 100%; object-fit: cover; }
+        .visit-timeline { border-left: 3px solid #185FA5; padding-left: 12px; margin-top: 8px; }
+        .visit-item { margin-bottom: 12px; padding: 8px; background: #f9f9f9; border-radius: 6px; }
+        .visit-item-date { font-size: 11px; color: #999; margin-bottom: 3px; }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size: 15px; }
+            .toolbar { padding: 10px; }
+            .content { padding: 12px; }
+            .records-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- LOGIN -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <h1><i class="fas fa-shield-halved"></i> Painel Administrador</h1>
+            <div class="subtitle">MozCommunity — acesso restrito</div>
+            <div id="loginError" class="error"></div>
+            <div id="loginSuccess" class="success"></div>
+            <form id="formLogin">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" required placeholder="supervisor@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Palavra-passe</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn">Entrar</button>
+            </form>
+            <p style="text-align:center; font-size: 11px; color: #999; margin-top: 16px;">
+                Só contas marcadas como Administrador têm acesso.<br>
+                Crie a sua conta na app principal MozCommunity.
+            </p>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashScreen" class="dash-container">
+        <div class="header">
+            <div>
+                <h1><i class="fas fa-shield-halved"></i> Painel Administrador</h1>
+                <div class="live-dot" id="liveDot">🟢 sincronização em tempo real</div>
+            </div>
+            <button class="btn-logout" onclick="logout()">Sair</button>
+        </div>
+
+        <div style="background:white; display:flex; gap:4px; padding: 0 20px; border-bottom: 2px solid #eee;">
+            <button class="nav-tab active" id="navRegistos" onclick="switchSection('registos')">📋 Registos</button>
+            <button class="nav-tab" id="navContas" onclick="switchSection('contas')">👤 Gerir Contas</button>
+        </div>
+
+        <div id="sectionRegistos">
+            <div class="toolbar">
+                <select id="filterProvincia" onchange="renderList()">
+                    <option value="">Todas Províncias</option>
+                    <option value="Cabo Delgado">Cabo Delgado</option>
+                    <option value="Nampula">Nampula</option>
+                    <option value="Niassa">Niassa</option>
+                </select>
+                <select id="filterStatus" onchange="renderList()">
+                    <option value="">Todos Status</option>
+                    <option value="planejado">Planeado</option>
+                    <option value="construcao">Em Construção</option>
+                    <option value="concluido">Concluído</option>
+                </select>
+                <select id="filterTecnico" onchange="renderList()">
+                    <option value="">Todos Técnicos</option>
+                </select>
+                <input type="text" id="filterTexto" placeholder="Pesquisar por nome..." oninput="renderList()" style="flex: 1; min-width: 160px;">
+            </div>
+
+            <div class="stats-bar" id="statsBar"></div>
+
+            <div class="content">
+                <div class="records-grid" id="recordsGrid"></div>
+            </div>
+        </div>
+
+        <div id="sectionContas" style="display: none;">
+            <div class="content">
+                <div id="accountsList" style="max-width: 700px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETALHE -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="detailTitle"></h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="detailContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // FIREBASE CONFIG (mesmo projeto da app principal)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqUPcchOO2QsCdawYAhn5rSB_JjrMZV94",
+            authDomain: "infra-mozcommunity.firebaseapp.com",
+            projectId: "infra-mozcommunity",
+            storageBucket: "infra-mozcommunity.firebasestorage.app",
+            messagingSenderId: "296393259981",
+            appId: "1:296393259981:web:ef88cf79d345ac2c866284"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUser = null;
+        let unsubscribes = [];
+        let allData = {}; // { userId: { name, records: [...] } }
+
+        // LOGIN
+        document.getElementById('formLogin').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            hideMessages();
+            try {
+                const result = await auth.signInWithEmailAndPassword(email, password);
+                const userDoc = await db.collection('users').doc(result.user.uid).get();
+
+                if (!userDoc.exists || !userDoc.data().isAdmin) {
+                    await auth.signOut();
+                    showError('Esta conta não tem permissões de Administrador.');
+                    return;
+                }
+
+                if (userDoc.data().ativo === false) {
+                    await auth.signOut();
+                    showError('🚫 Esta conta de Administrador foi desativada.');
+                    return;
+                }
+
+                currentUser = result.user;
+                showDashboard();
+                startListening();
+            } catch (error) {
+                showError('Erro: ' + traduzErro(error.code) );
+            }
+        });
+
+        function traduzErro(code) {
+            const map = {
+                'auth/invalid-credential': 'Email ou palavra-passe incorretos.',
+                'auth/user-not-found': 'Conta não encontrada.',
+                'auth/wrong-password': 'Palavra-passe incorreta.',
+                'auth/invalid-email': 'Email inválido.'
+            };
+            return map[code] || code;
+        }
+
+        // AUTH STATE (mantém sessão se já estava logado)
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists && userDoc.data().isAdmin && userDoc.data().ativo !== false) {
+                    currentUser = user;
+                    showDashboard();
+                    startListening();
+                } else {
+                    if (userDoc.exists && userDoc.data().ativo === false) {
+                        await auth.signOut();
+                    }
+                    showLogin();
+                }
+            } else {
+                showLogin();
+            }
+        });
+
+        // TEMPO REAL: um listener por técnico
+        async function startListening() {
+            unsubscribes.forEach(u => u());
+            unsubscribes = [];
+            allData = {};
+
+            const usersSnapshot = await db.collection('users').get();
+            const filterTecnico = document.getElementById('filterTecnico');
+            filterTecnico.innerHTML = '<option value="">Todos Técnicos</option>';
+
+            usersSnapshot.forEach(userDoc => {
+                const userId = userDoc.id;
+                const userName = userDoc.data().name || 'Técnico';
+
+                const opt = document.createElement('option');
+                opt.value = userId;
+                opt.textContent = userName;
+                filterTecnico.appendChild(opt);
+
+                const unsub = db.collection('users').doc(userId)
+                    .collection('infraestruturas').orderBy('criado', 'desc')
+                    .onSnapshot(snapshot => {
+                        allData[userId] = {
+                            name: userName,
+                            records: snapshot.docs.map(d => ({ id: d.id, userId, data: d.data() }))
+                        };
+                        renderList();
+                    }, err => console.warn('Listener falhou:', userName, err.message));
+
+                unsubscribes.push(unsub);
+            });
+
+            // Listener em tempo real da coleção "users" para gestão de contas
+            const unsubUsers = db.collection('users').onSnapshot(snapshot => {
+                renderAccountsList(snapshot.docs);
+            }, err => console.warn('Listener de contas falhou:', err.message));
+            unsubscribes.push(unsubUsers);
+        }
+
+        // ===== GESTÃO DE CONTAS =====
+        function switchSection(section) {
+            document.getElementById('navRegistos').classList.toggle('active', section === 'registos');
+            document.getElementById('navContas').classList.toggle('active', section === 'contas');
+            document.getElementById('sectionRegistos').style.display = section === 'registos' ? 'block' : 'none';
+            document.getElementById('sectionContas').style.display = section === 'contas' ? 'block' : 'none';
+        }
+
+        function renderAccountsList(docs) {
+            const list = document.getElementById('accountsList');
+            if (!list) return;
+            list.innerHTML = '';
+
+            docs.forEach(doc => {
+                const u = doc.data();
+                const uid = doc.id;
+                const isSelf = currentUser && uid === currentUser.uid;
+                const admin = u.isAdmin || false;
+                const ativo = u.ativo !== false; // por defeito true, salvo se explicitamente false
+
+                const div = document.createElement('div');
+                div.className = 'account-card';
+                div.innerHTML = `
+                    <div class="account-info">
+                        <h4>${u.name || 'Sem nome'} ${isSelf ? '<span style="color:#185FA5; font-size:11px;">(você)</span>' : ''}</h4>
+                        <p>${u.email || ''} ${!ativo ? '<span style="color:#dc3545; font-weight:600;"> • DESATIVADA</span>' : ''}</p>
+                    </div>
+                    <div class="account-actions">
+                        <button class="btn-small btn-toggle-admin ${admin ? 'is-admin' : ''}" onclick="toggleAdmin('${uid}', ${admin})" ${isSelf ? 'disabled title="Não pode alterar a sua própria conta"' : ''}>
+                            ${admin ? '👑 Administrador' : 'Tornar Administrador'}
+                        </button>
+                        <button class="btn-small btn-toggle-ativo ${!ativo ? 'inativo' : ''}" onclick="toggleAtivo('${uid}', ${ativo})" ${isSelf ? 'disabled title="Não pode desativar a sua própria conta"' : ''}>
+                            ${ativo ? '✅ Ativa' : '🚫 Desativada'}
+                        </button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+
+            if (docs.length === 0) {
+                list.innerHTML = '<div class="empty-state">Nenhuma conta encontrada.</div>';
+            }
+        }
+
+        async function toggleAdmin(uid, currentlyAdmin) {
+            try {
+                await db.collection('users').doc(uid).update({ isAdmin: !currentlyAdmin });
+            } catch (error) {
+                alert('Erro: ' + error.message);
+            }
+        }
+
+        async function toggleAtivo(uid, currentlyAtivo) {
+            const acao = currentlyAtivo ? 'desativar' : 'reativar';
+            if (!confirm(`Tem a certeza que quer ${acao} esta conta?`)) return;
+            try {
+                await db.collection('users').doc(uid).update({ ativo: !currentlyAtivo });
+            } catch (error) {
+                alert('Erro: ' + error.message);
+            }
+        }
+
+        function renderList() {
+            const grid = document.getElementById('recordsGrid');
+            const statsBar = document.getElementById('statsBar');
+
+            let todos = [];
+            Object.values(allData).forEach(u => u.records.forEach(r => todos.push({ ...r, tecnico: u.name })));
+
+            todos.sort((a, b) => {
+                const da = a.data.criado?.toDate ? a.data.criado.toDate() : new Date(a.data.criado);
+                const db_ = b.data.criado?.toDate ? b.data.criado.toDate() : new Date(b.data.criado);
+                return db_ - da;
+            });
+
+            // Estatísticas (sobre o total)
+            const totalConstrucao = todos.filter(r => r.data.status === 'construcao').length;
+            const totalConcluido = todos.filter(r => r.data.status === 'concluido').length;
+            const totalPlaneado = todos.filter(r => r.data.status === 'planejado').length;
+            const totalVisitas = todos.reduce((s, r) => s + (r.data.visitas ? r.data.visitas.length : 0), 0);
+
+            statsBar.innerHTML = `
+                <div class="stat-card"><div class="num">${todos.length}</div><div class="label">Registos</div></div>
+                <div class="stat-card"><div class="num">${totalPlaneado}</div><div class="label">Planeados</div></div>
+                <div class="stat-card"><div class="num">${totalConstrucao}</div><div class="label">Em Construção</div></div>
+                <div class="stat-card"><div class="num">${totalConcluido}</div><div class="label">Concluídos</div></div>
+                <div class="stat-card"><div class="num">${totalVisitas}</div><div class="label">Monitorias</div></div>
+            `;
+
+            // Filtros
+            const fProv = document.getElementById('filterProvincia').value;
+            const fStatus = document.getElementById('filterStatus').value;
+            const fTecnico = document.getElementById('filterTecnico').value;
+            const fTexto = document.getElementById('filterTexto').value.toLowerCase().trim();
+
+            let filtrados = todos;
+            if (fProv) filtrados = filtrados.filter(r => r.data.provincia === fProv);
+            if (fStatus) filtrados = filtrados.filter(r => r.data.status === fStatus);
+            if (fTecnico) filtrados = filtrados.filter(r => r.userId === fTecnico);
+            if (fTexto) filtrados = filtrados.filter(r => (r.data.nome || '').toLowerCase().includes(fTexto));
+
+            grid.innerHTML = '';
+            if (filtrados.length === 0) {
+                grid.innerHTML = '<div class="empty-state">Nenhum registo encontrado.</div>';
+                return;
+            }
+
+            filtrados.forEach(r => {
+                const data = r.data;
+                const numVisitas = data.visitas ? data.visitas.length : 0;
+                const div = document.createElement('div');
+                div.className = 'record-card';
+                div.onclick = () => showDetail(r);
+                div.innerHTML = `
+                    <h3>${data.nome || 'Sem nome'}</h3>
+                    <p><i class="fas fa-user"></i> ${r.tecnico}</p>
+                    <p><i class="fas fa-map-marker-alt"></i> ${data.provincia || ''} • ${data.distrito || ''}, ${data.aldeia || ''}</p>
+                    <p><span class="badge badge-${data.status}">${data.status}</span> &nbsp; ${data.progress || 0}% &nbsp; 📋 ${numVisitas} monitoria(s)</p>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        let selectedRecord = null;
+
+        function showDetail(r) {
+            selectedRecord = r;
+            const data = r.data;
+            document.getElementById('detailTitle').textContent = data.nome || 'Sem nome';
+
+            let visitsHTML = '';
+            if (data.visitas && data.visitas.length > 0) {
+                visitsHTML = '<h4 style="margin-top:16px; margin-bottom:8px; font-size:13px;">Histórico de Monitorias</h4><div class="visit-timeline">';
+                data.visitas.forEach((v, idx) => {
+                    const vDate = v.data?.toDate ? v.data.toDate() : new Date(v.data);
+                    visitsHTML += `
+                        <div class="visit-item">
+                            <div class="visit-item-date">Monitoria ${idx + 2} — ${vDate.toLocaleString('pt-PT')}</div>
+                            <div><span class="badge badge-${v.status}">${v.status}</span> ${v.progress}%</div>
+                            ${v.observacoes ? `<p style="font-size:12px; margin-top:4px;">${v.observacoes}</p>` : ''}
+                            ${v.fotos && v.fotos.length ? `<div class="photo-grid">${v.fotos.map(f => `<div class="photo-item"><img src="${f.url}"></div>`).join('')}</div>` : ''}
+                        </div>`;
+                });
+                visitsHTML += '</div>';
+            }
+
+            document.getElementById('detailContent').innerHTML = `
+                <div class="detail-row"><strong>Técnico:</strong> ${r.tecnico}</div>
+                <div class="detail-row"><strong>Tipo:</strong> ${data.tipo || '-'}</div>
+                <div class="detail-row"><strong>Localização:</strong> ${data.localidade || ''}, ${data.aldeia || ''}</div>
+                <div class="detail-row"><strong>Distrito:</strong> ${data.distrito || '-'}</div>
+                <div class="detail-row"><strong>Posto Administrativo:</strong> ${data.postoAdmin || '-'}</div>
+                <div class="detail-row"><strong>GPS:</strong> ${data.latitude ? data.latitude.toFixed(5) : '-'}, ${data.longitude ? data.longitude.toFixed(5) : '-'}</div>
+                <div class="detail-row"><strong>Status atual:</strong> <span class="badge badge-${data.status}">${data.status}</span></div>
+                <div class="detail-row"><strong>Progresso:</strong> ${data.progress || 0}%</div>
+                ${data.fotos && data.fotos.length ? `
+                    <h4 style="margin-top:14px; margin-bottom:8px; font-size:13px;">Fotos Iniciais</h4>
+                    <div class="photo-grid">${data.fotos.map(f => `<div class="photo-item"><img src="${f.url}"></div>`).join('')}</div>
+                ` : ''}
+                ${visitsHTML}
+                <div style="margin-top: 18px; display: flex; gap: 8px;">
+                    <button type="button" class="btn" style="background: #ffc107; color: #333;" onclick="editRecordForm()">✏️ Editar</button>
+                    <button type="button" class="btn" style="background: #dc3545;" onclick="deleteRecordConfirm()">🗑️ Eliminar</button>
+                </div>
+            `;
+            document.getElementById('detailModal').classList.add('show');
+        }
+
+        function editRecordForm() {
+            if (!selectedRecord) return;
+            const data = selectedRecord.data;
+            document.getElementById('detailContent').innerHTML = `
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" id="editNome" value="${(data.nome || '').replace(/"/g, '&quot;')}">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="editStatus">
+                        <option value="planejado" ${data.status === 'planejado' ? 'selected' : ''}>Planeado</option>
+                        <option value="construcao" ${data.status === 'construcao' ? 'selected' : ''}>Em Construção</option>
+                        <option value="concluido" ${data.status === 'concluido' ? 'selected' : ''}>Concluído</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Progresso (%)</label>
+                    <input type="number" id="editProgress" min="0" max="100" value="${data.progress || 0}">
+                </div>
+                <div style="display:flex; gap:8px; margin-top: 14px;">
+                    <button type="button" class="btn" style="background:#28a745;" onclick="saveRecordEdit()">💾 Guardar</button>
+                    <button type="button" class="btn" style="background:#6c757d;" onclick="showDetail(selectedRecord)">Cancelar</button>
+                </div>
+            `;
+        }
+
+        async function saveRecordEdit() {
+            if (!selectedRecord) return;
+            const nome = document.getElementById('editNome').value.trim();
+            const status = document.getElementById('editStatus').value;
+            const progress = parseInt(document.getElementById('editProgress').value) || 0;
+
+            if (!nome) { alert('O nome não pode ficar vazio.'); return; }
+
+            try {
+                await db.collection('users').doc(selectedRecord.userId)
+                    .collection('infraestruturas').doc(selectedRecord.id)
+                    .update({ nome, status, progress });
+                closeModal();
+            } catch (error) {
+                alert('Erro ao guardar: ' + error.message);
+            }
+        }
+
+        async function deleteRecordConfirm() {
+            if (!selectedRecord) return;
+            if (!confirm(`Eliminar definitivamente o registo "${selectedRecord.data.nome}"? Esta ação não pode ser desfeita.`)) return;
+            try {
+                await db.collection('users').doc(selectedRecord.userId)
+                    .collection('infraestruturas').doc(selectedRecord.id)
+                    .delete();
+                closeModal();
+            } catch (error) {
+                alert('Erro ao eliminar: ' + error.message);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('show');
+            selectedRecord = null;
+        }
+
+        function showLogin() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('dashScreen').classList.remove('show');
+        }
+
+        function showDashboard() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('dashScreen').classList.add('show');
+        }
+
+        function logout() {
+            unsubscribes.forEach(u => u());
+            unsubscribes = [];
+            auth.signOut();
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('loginError');
+            el.textContent = msg;
+            el.classList.add('show');
+        }
+
+        function hideMessages() {
+            document.getElementById('loginError').classList.remove('show');
+            document.getElementById('loginSuccess').classList.remove('show');
+        }
+    </script>
+</body>
+</html>
