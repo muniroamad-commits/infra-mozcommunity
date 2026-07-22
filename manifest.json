@@ -1,5 +1,5 @@
 {
-  "name": "Portal de Monitoria de Infraestruturas Públicas e Comunitárias",
+  "name": "Portal de Monitoria de Infraestruturas do Projecto MozCommunity",
   "short_name": "Monitoria ADIN",
   "description": "App de monitorização de infraestruturas públicas e comunitárias, com captura de fotos, GPS e sincronização em tempo real",
   "start_url": "/",
