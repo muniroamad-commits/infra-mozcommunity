@@ -9,6 +9,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
@@ -231,11 +232,34 @@
 
             <div class="stats-bar" id="relStatsBar"></div>
 
-            <div style="padding: 0 20px 12px;">
+            <div style="padding: 0 20px 12px; display:flex; gap:8px; align-items:center; flex-wrap: wrap;">
                 <button class="btn" style="background:#9D212B; width:auto; padding:10px 20px;" onclick="exportarRelatorioPDF()">📄 Exportar PDF</button>
+                <span id="relGranularidadeLabel" style="font-size:12px; color:#666; background:#f5f5f5; padding:6px 12px; border-radius:6px;"></span>
             </div>
 
-            <div class="content" style="overflow-x:auto;">
+            <!-- GRÁFICOS -->
+            <div class="content" style="padding-top:0;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                    <div style="background:white; border:1px solid #eee; border-radius:10px; padding:14px;">
+                        <h4 style="font-size:13px; margin-bottom:10px; color:#9D212B;">💰 Orçamento Gasto</h4>
+                        <canvas id="chartOrcamento" height="220"></canvas>
+                    </div>
+                    <div style="background:white; border:1px solid #eee; border-radius:10px; padding:14px;">
+                        <h4 style="font-size:13px; margin-bottom:10px; color:#9D212B;">🏗️ Nº de Infraestruturas</h4>
+                        <canvas id="chartQuantidade" height="220"></canvas>
+                    </div>
+                    <div style="background:white; border:1px solid #eee; border-radius:10px; padding:14px;">
+                        <h4 style="font-size:13px; margin-bottom:10px; color:#9D212B;">🚧 Por Tipo</h4>
+                        <canvas id="chartTipo" height="220"></canvas>
+                    </div>
+                    <div style="background:white; border:1px solid #eee; border-radius:10px; padding:14px;">
+                        <h4 style="font-size:13px; margin-bottom:10px; color:#9D212B;">🏛️ Por Categoria</h4>
+                        <canvas id="chartCategoria" height="220"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content" style="overflow-x:auto; padding-top:0;">
                 <table id="relatorioTabela" style="width:100%; border-collapse:collapse; font-size:12px; background:white;">
                     <thead>
                         <tr style="background:#f5f5f5; text-align:left;">
@@ -705,6 +729,7 @@
         }
 
         let ultimoRelatorioFiltrado = [];
+        let chartInstances = { orcamento: null, quantidade: null, tipo: null, categoria: null };
 
         function renderRelatorio() {
             let todos = [];
@@ -800,6 +825,120 @@
                     <td style="padding:8px;">${r.orcamentoTotal.toLocaleString('pt-PT')}</td>
                 `;
                 tbody.appendChild(tr);
+            });
+
+            renderGraficos(filtrados, fProv);
+        }
+
+        // ===== GRÁFICOS (Chart.js) =====
+        // Lógica de granularidade: sem província selecionada -> agrupa por Província.
+        // Com uma província selecionada -> agrupa por Distrito (dentro dessa província).
+        function renderGraficos(filtrados, fProvSelecionada) {
+            const agruparPorDistrito = !!fProvSelecionada;
+            const campoAgrupamento = agruparPorDistrito ? 'distrito' : 'provincia';
+            const rotuloAgrupamento = agruparPorDistrito ? 'Distrito' : 'Província';
+
+            document.getElementById('relGranularidadeLabel').textContent =
+                agruparPorDistrito
+                    ? `📍 A mostrar gráficos por Distrito (dentro de ${fProvSelecionada})`
+                    : '📍 A mostrar gráficos por Província (selecione uma província para ver por Distrito)';
+
+            // --- Agregações ---
+            const porGrupoOrcamento = {};
+            const porGrupoQuantidade = {};
+            const porTipo = {};
+            const porCategoria = { publica: 0, comunitaria: 0 };
+
+            filtrados.forEach(r => {
+                const data = r.data;
+                const grupo = data[campoAgrupamento] || 'Não definido';
+                porGrupoOrcamento[grupo] = (porGrupoOrcamento[grupo] || 0) + (r.orcamentoTotal || 0);
+                porGrupoQuantidade[grupo] = (porGrupoQuantidade[grupo] || 0) + 1;
+
+                const tipo = data.tipo || 'outro';
+                porTipo[tipo] = (porTipo[tipo] || 0) + 1;
+
+                if (data.categoria === 'publica') porCategoria.publica++;
+                else if (data.categoria === 'comunitaria') porCategoria.comunitaria++;
+            });
+
+            const coresPaleta = ['#9D212B', '#FAA842', '#3f3fb0', '#28a745', '#ffc107', '#6c757d', '#17a2b8', '#e83e8c'];
+
+            // Destruir gráficos antigos antes de recriar (evita erro "canvas já em uso")
+            Object.values(chartInstances).forEach(c => { if (c) c.destroy(); });
+
+            // 1. Orçamento gasto por Província/Distrito
+            const labelsOrc = Object.keys(porGrupoOrcamento);
+            chartInstances.orcamento = new Chart(document.getElementById('chartOrcamento'), {
+                type: 'bar',
+                data: {
+                    labels: labelsOrc,
+                    datasets: [{
+                        label: `Orçamento Gasto (MZN) por ${rotuloAgrupamento}`,
+                        data: labelsOrc.map(l => porGrupoOrcamento[l]),
+                        backgroundColor: '#9D212B'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            // 2. Número de infraestruturas por Província/Distrito
+            const labelsQtd = Object.keys(porGrupoQuantidade);
+            chartInstances.quantidade = new Chart(document.getElementById('chartQuantidade'), {
+                type: 'bar',
+                data: {
+                    labels: labelsQtd,
+                    datasets: [{
+                        label: `Nº de Infraestruturas por ${rotuloAgrupamento}`,
+                        data: labelsQtd.map(l => porGrupoQuantidade[l]),
+                        backgroundColor: '#FAA842'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+
+            // 3. Número de infraestruturas por Tipo
+            const tipoLabelsMap = { estrada: 'Estrada', escola: 'Escola', saude: 'Centro Saúde', agua: 'Água', outro: 'Outro' };
+            const labelsTipo = Object.keys(porTipo);
+            chartInstances.tipo = new Chart(document.getElementById('chartTipo'), {
+                type: 'bar',
+                data: {
+                    labels: labelsTipo.map(t => tipoLabelsMap[t] || t),
+                    datasets: [{
+                        label: 'Nº de Infraestruturas por Tipo',
+                        data: labelsTipo.map(l => porTipo[l]),
+                        backgroundColor: coresPaleta
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+
+            // 4. Por Categoria (Pública vs Comunitária)
+            chartInstances.categoria = new Chart(document.getElementById('chartCategoria'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['🏛️ Pública', '🤝 Comunitária'],
+                    datasets: [{
+                        data: [porCategoria.publica, porCategoria.comunitaria],
+                        backgroundColor: ['#3f3fb0', '#a3590a']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
             });
         }
 
