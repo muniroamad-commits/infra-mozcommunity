@@ -3,6 +3,7 @@
   "short_name": "Monitoria ADIN",
   "description": "App de monitorização de infraestruturas públicas e comunitárias, com captura de fotos, GPS e sincronização em tempo real",
   "start_url": "/",
+  "id": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
@@ -32,32 +33,32 @@
       "purpose": "maskable"
     }
   ],
+  "screenshots": [
+    {
+      "src": "screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "screenshot-narrow.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Novo Registo",
       "short_name": "Novo",
       "description": "Criar novo registo de infraestrutura",
-      "url": "/?tab=novo",
-      "icons": [
-        {
-          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%239D212B' width='96' height='96'/><text x='48' y='48' font-size='50' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'>+</text></svg>",
-          "sizes": "96x96",
-          "type": "image/svg+xml"
-        }
-      ]
+      "url": "/?tab=novo"
     },
     {
       "name": "Meus Registos",
       "short_name": "Registos",
       "description": "Ver meus registos de campo",
-      "url": "/?tab=lista",
-      "icons": [
-        {
-          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%23FAA842' width='96' height='96'/><text x='48' y='48' font-size='50' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'>📋</text></svg>",
-          "sizes": "96x96",
-          "type": "image/svg+xml"
-        }
-      ]
+      "url": "/?tab=lista"
     }
   ],
   "share_target": {
