@@ -1,9 +1,14 @@
-// MozCommunity Service Worker v9 - Rede primeiro (sempre atualizado), cache como reserva offline
-const CACHE_NAME = 'mozcommunity-v9';
+// MozCommunity Service Worker v10 - Rede primeiro (sempre atualizado), cache como reserva offline
+const CACHE_NAME = 'mozcommunity-v10';
 const urlsToCache = [
   './',
   './index.html',
   './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './apple-touch-icon.png',
+  './favicon-32.png',
+  './favicon-16.png',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js',
