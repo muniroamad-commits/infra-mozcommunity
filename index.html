@@ -256,7 +256,23 @@
 
             <!-- TAB: SUPERVISOR -->
             <div id="tab-supervisor" class="tab-content">
-                <h2 style="margin-bottom: 12px; font-size: 15px;">Todos os Registos</h2>
+                <h2 style="margin-bottom: 8px; font-size: 15px;">Todos os Registos <span id="supervisorLiveDot" style="font-size: 10px; color: #28a745;">🟢 tempo real</span></h2>
+
+                <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+                    <select id="filterProvincia" onchange="renderSupervisorList()" style="flex: 1; min-width: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px;">
+                        <option value="">Todas Províncias</option>
+                        <option value="Cabo Delgado">Cabo Delgado</option>
+                        <option value="Nampula">Nampula</option>
+                        <option value="Niassa">Niassa</option>
+                    </select>
+                    <select id="filterStatus" onchange="renderSupervisorList()" style="flex: 1; min-width: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px;">
+                        <option value="">Todos Status</option>
+                        <option value="planejado">Planeado</option>
+                        <option value="construcao">Em Construção</option>
+                        <option value="concluido">Concluído</option>
+                    </select>
+                </div>
+                <div id="supervisorStats" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;"></div>
                 <div id="supervisorList"></div>
             </div>
         </div>
@@ -717,37 +733,109 @@
             }
         }
 
-        // SUPERVISOR: Ver Todos
+        // ===== SUPERVISOR: SINCRONIZAÇÃO EM TEMPO REAL =====
+        // Em vez de "buscar uma vez", usamos onSnapshot: o Firestore avisa-nos
+        // automaticamente sempre que um técnico cria/edita um registo ou visita,
+        // sem precisar de recarregar a página.
+        let supervisorUnsubscribes = [];
+        let supervisorData = {}; // { userId: { name, records: [...] } }
+
         async function loadSupervisorData() {
             if (!isSupervisor) return;
+
+            // Limpar listeners antigos antes de criar novos (evita duplicações)
+            supervisorUnsubscribes.forEach(unsub => unsub());
+            supervisorUnsubscribes = [];
+            supervisorData = {};
+
             try {
                 const usersSnapshot = await db.collection('users').get();
-                const list = document.getElementById('supervisorList');
-                list.innerHTML = '';
 
-                for (const userDoc of usersSnapshot.docs) {
-                    const infraSnapshot = await db.collection('users').doc(userDoc.id)
-                        .collection('infraestruturas').orderBy('criado', 'desc').get();
+                usersSnapshot.forEach(userDoc => {
+                    const userId = userDoc.id;
+                    const userName = userDoc.data().name || 'Técnico';
 
-                    if (infraSnapshot.empty) continue;
+                    // Listener em tempo real por cada técnico
+                    const unsub = db.collection('users').doc(userId)
+                        .collection('infraestruturas').orderBy('criado', 'desc')
+                        .onSnapshot(snapshot => {
+                            supervisorData[userId] = {
+                                name: userName,
+                                records: snapshot.docs.map(d => ({ id: d.id, data: d.data() }))
+                            };
+                            renderSupervisorList();
+                        }, error => {
+                            console.warn('Listener supervisor falhou para', userName, error.message);
+                        });
 
-                    infraSnapshot.forEach(doc => {
-                        const data = doc.data();
-                        const div = document.createElement('div');
-                        div.className = 'record-card';
-                        div.onclick = () => showDetail(doc.id, data);
-                        div.innerHTML = `
-                            <h3>${data.nome}</h3>
-                            <p><strong>Técnico:</strong> ${userDoc.data().name}</p>
-                            <p><i class="fas fa-map-marker"></i> ${data.distrito}, ${data.aldeia}</p>
-                            <p><span class="badge badge-${data.status}">${data.status}</span> ${data.progress}%</p>
-                        `;
-                        list.appendChild(div);
-                    });
-                }
+                    supervisorUnsubscribes.push(unsub);
+                });
             } catch (error) {
                 showError('Erro: ' + error.message);
             }
+        }
+
+        function renderSupervisorList() {
+            const list = document.getElementById('supervisorList');
+            const statsBox = document.getElementById('supervisorStats');
+            if (!list) return;
+
+            const filtroProvincia = document.getElementById('filterProvincia')?.value || '';
+            const filtroStatus = document.getElementById('filterStatus')?.value || '';
+
+            // Juntar todos os registos de todos os técnicos numa lista só
+            let todos = [];
+            Object.values(supervisorData).forEach(user => {
+                user.records.forEach(r => todos.push({ ...r, tecnico: user.name }));
+            });
+
+            // Ordenar pelo mais recente
+            todos.sort((a, b) => {
+                const da = a.data.criado?.toDate ? a.data.criado.toDate() : new Date(a.data.criado);
+                const db_ = b.data.criado?.toDate ? b.data.criado.toDate() : new Date(b.data.criado);
+                return db_ - da;
+            });
+
+            // Estatísticas rápidas (sobre o total, antes de filtrar)
+            const totalPlaneado = todos.filter(r => r.data.status === 'planejado').length;
+            const totalConstrucao = todos.filter(r => r.data.status === 'construcao').length;
+            const totalConcluido = todos.filter(r => r.data.status === 'concluido').length;
+            const totalVisitas = todos.reduce((sum, r) => sum + (r.data.visitas ? r.data.visitas.length : 0), 0);
+
+            if (statsBox) {
+                statsBox.innerHTML = `
+                    <div style="background:#e9ecef; padding:6px 10px; border-radius:6px; font-size:11px;"><strong>${todos.length}</strong> registos</div>
+                    <div style="background:#fff3cd; padding:6px 10px; border-radius:6px; font-size:11px;"><strong>${totalConstrucao}</strong> em construção</div>
+                    <div style="background:#d4edda; padding:6px 10px; border-radius:6px; font-size:11px;"><strong>${totalConcluido}</strong> concluídos</div>
+                    <div style="background:#e2e3ff; padding:6px 10px; border-radius:6px; font-size:11px;"><strong>${totalVisitas}</strong> visitas/monitorias</div>
+                `;
+            }
+
+            // Aplicar filtros
+            let filtrados = todos;
+            if (filtroProvincia) filtrados = filtrados.filter(r => r.data.provincia === filtroProvincia);
+            if (filtroStatus) filtrados = filtrados.filter(r => r.data.status === filtroStatus);
+
+            list.innerHTML = '';
+            if (filtrados.length === 0) {
+                list.innerHTML = '<div class="empty-state">Nenhum registo encontrado.</div>';
+                return;
+            }
+
+            filtrados.forEach(r => {
+                const data = r.data;
+                const div = document.createElement('div');
+                div.className = 'record-card';
+                div.onclick = () => showDetail(r.id, data);
+                const numVisitas = data.visitas ? data.visitas.length : 0;
+                div.innerHTML = `
+                    <h3>${data.nome}</h3>
+                    <p><strong>Técnico:</strong> ${r.tecnico}</p>
+                    <p><i class="fas fa-map-marker"></i> ${data.provincia || ''} • ${data.distrito || ''}, ${data.aldeia || ''}</p>
+                    <p><span class="badge badge-${data.status}">${data.status}</span> ${data.progress}% • 📋 ${numVisitas} monitoria(s)</p>
+                `;
+                list.appendChild(div);
+            });
         }
 
         // VER DETALHE
@@ -952,6 +1040,8 @@
         }
 
         function logout() {
+            supervisorUnsubscribes.forEach(unsub => unsub());
+            supervisorUnsubscribes = [];
             auth.signOut();
         }
 
