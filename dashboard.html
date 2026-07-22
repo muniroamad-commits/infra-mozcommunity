@@ -10,7 +10,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
@@ -291,9 +290,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Container invisível (fora do ecrã) usado só para "fotografar" o mapa de satélite para o PDF -->
-    <div id="mapExportContainer" style="position: fixed; left: -9999px; top: 0; width: 900px; height: 600px;"></div>
 
     <!-- MODAL DETALHE -->
     <div id="detailModal" class="modal">
@@ -739,81 +735,6 @@
             }, 0);
         }
 
-        // Cria um mapa de satélite temporário (com fronteiras administrativas), coloca os
-        // pontos filtrados, espera as imagens de satélite carregarem, e "fotografa" tudo
-        // para uma imagem PNG que é depois inserida no PDF.
-        async function captureMapForPDF(records) {
-            const container = document.getElementById('mapExportContainer');
-            container.innerHTML = ''; // limpar qualquer mapa anterior
-
-            const tempMap = L.map(container, {
-                zoomControl: false,
-                attributionControl: false,
-                preferCanvas: true
-            }).setView([-13.0, 39.0], 6);
-
-            const camadaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                maxZoom: 19,
-                crossOrigin: true
-            }).addTo(tempMap);
-
-            // Camada de fronteiras/divisões administrativas (país, província, distrito) sobreposta ao satélite
-            const camadaFronteiras = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-                maxZoom: 19,
-                crossOrigin: true
-            }).addTo(tempMap);
-
-            // Marcadores dos registos filtrados
-            const comValidGPS = records.filter(r => r.data.latitude && r.data.longitude);
-            const marcadoresTemp = [];
-            comValidGPS.forEach(r => {
-                const data = r.data;
-                const cor = data.categoria === 'publica' ? '#3f3fb0' : (data.categoria === 'comunitaria' ? '#a3590a' : '#9D212B');
-                const icon = L.divIcon({
-                    className: '',
-                    html: `<div style="background:${cor}; width:14px; height:14px; border-radius:50%; border:2px solid white; box-shadow:0 1px 3px rgba(0,0,0,0.6);"></div>`,
-                    iconSize: [14, 14],
-                    iconAnchor: [7, 7]
-                });
-                const marker = L.marker([data.latitude, data.longitude], { icon }).addTo(tempMap);
-                marcadoresTemp.push(marker);
-            });
-
-            if (marcadoresTemp.length > 0) {
-                const grupo = L.featureGroup(marcadoresTemp);
-                tempMap.fitBounds(grupo.getBounds().pad(0.3));
-            }
-
-            tempMap.invalidateSize();
-
-            // Esperar as camadas de satélite e fronteiras terminarem de carregar os tiles visíveis
-            await Promise.all([
-                new Promise(resolve => {
-                    if (camadaSatelite._loading === false) return resolve();
-                    camadaSatelite.once('load', resolve);
-                    setTimeout(resolve, 4000); // rede lenta: segue em frente ao fim de 4s de qualquer forma
-                }),
-                new Promise(resolve => {
-                    camadaFronteiras.once('load', resolve);
-                    setTimeout(resolve, 4000);
-                })
-            ]);
-
-            // Pequena pausa extra para garantir que o navegador já pintou os tiles no ecrã
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            let imgData = null;
-            try {
-                const canvas = await html2canvas(container, { useCORS: true, allowTaint: false, logging: false });
-                imgData = canvas.toDataURL('image/png', 1.0);
-            } catch (err) {
-                console.warn('Não foi possível capturar o mapa de satélite para o PDF:', err.message);
-            }
-
-            tempMap.remove();
-            return imgData;
-        }
-
         let ultimoRelatorioFiltrado = [];
         let chartInstances = { orcamento: null, quantidade: null, tipo: null, categoria: null, status: null };
 
@@ -1058,7 +979,7 @@
             }
 
             const btnExport = document.getElementById('btnExportarPDF');
-            if (btnExport) { btnExport.disabled = true; btnExport.textContent = '⏳ A gerar PDF (a carregar mapa de satélite)...'; }
+            if (btnExport) { btnExport.disabled = true; btnExport.textContent = '⏳ A gerar PDF...'; }
 
             try {
                 const { jsPDF } = window.jspdf;
@@ -1116,7 +1037,6 @@
                     { x: 14, y: 127 },
                     { x: 105, y: 127 }
                 ];
-                const posicaoMapa = { x: 196, y: 127 };
 
                 graficosParaExportar.forEach((g, idx) => {
                     const canvas = document.getElementById(g.id);
@@ -1132,19 +1052,6 @@
                         console.warn('Não foi possível capturar o gráfico:', g.id, err.message);
                     }
                 });
-
-                // 6º espaço: mapa de satélite com os pontos das infraestruturas e fronteiras administrativas
-                const mapImgData = await captureMapForPDF(ultimoRelatorioFiltrado);
-                if (mapImgData) {
-                    doc.setFontSize(9);
-                    doc.setTextColor(80);
-                    doc.text('Localização (Satélite)', posicaoMapa.x, posicaoMapa.y - 2);
-                    doc.addImage(mapImgData, 'PNG', posicaoMapa.x, posicaoMapa.y, larguraImg, alturaImg);
-                } else {
-                    doc.setFontSize(8);
-                    doc.setTextColor(150);
-                    doc.text('(Mapa indisponível — verifique a ligação à internet)', posicaoMapa.x, posicaoMapa.y + 25);
-                }
 
                 // ===== TABELA (numa nova página, para não sobrepor os gráficos) =====
                 doc.addPage();
