@@ -146,14 +146,14 @@
     </div>
 
     <script>
-        // FIREBASE CONFIG - CREDENCIAIS REAIS
+        // FIREBASE CONFIG - CREDENCIAIS CORRETAS
         const firebaseConfig = {
-            apiKey: "AIzaSyDqUPcchO02QsCdawYAhn5rSB_JjrMZV94",
+            apiKey: "AIzaSyDqUPcchOO2QsCdawYAhn5rSB_JjrMZV94",
             authDomain: "infra-mozcommunity.firebaseapp.com",
             projectId: "infra-mozcommunity",
             storageBucket: "infra-mozcommunity.firebasestorage.app",
             messagingSenderId: "296393259981",
-            appId: "1:296393259981:web:d6cd641869cea1648662284"
+            appId: "1:296393259981:web:ef88cf79d345ac2c866284"
         };
 
         // INICIALIZAR FIREBASE
@@ -181,9 +181,9 @@
             const password = document.getElementById('loginPassword').value;
             try {
                 await auth.signInWithEmailAndPassword(email, password);
-                showSuccess('Login realizado!');
+                showSuccess('✅ Login realizado!');
             } catch (error) {
-                showError('Erro: ' + error.message);
+                showError('❌ Erro: ' + error.message);
             }
         });
 
@@ -196,9 +196,10 @@
             try {
                 const result = await auth.createUserWithEmailAndPassword(email, password);
                 await result.user.updateProfile({ displayName: name });
-                showSuccess('Conta criada com sucesso!');
+                showSuccess('✅ Conta criada com sucesso!');
+                setTimeout(() => showLogin(), 2000);
             } catch (error) {
-                showError('Erro: ' + error.message);
+                showError('❌ Erro: ' + error.message);
             }
         });
 
@@ -216,11 +217,11 @@
             try {
                 await db.collection('users').doc(currentUser.uid)
                     .collection('infraestruturas').add(record);
-                showSuccess('Registo guardado!');
+                showSuccess('✅ Registo guardado com sucesso!');
                 document.getElementById('formRegisto').reset();
-                switchTab('lista');
+                setTimeout(() => switchTab('lista'), 1500);
             } catch (error) {
-                showError('Erro: ' + error.message);
+                showError('❌ Erro: ' + error.message);
             }
         });
 
@@ -232,7 +233,7 @@
                 const list = document.getElementById('recordsList');
                 list.innerHTML = '';
                 if (snapshot.empty) {
-                    list.innerHTML = '<div class="empty-state">Nenhum registo</div>';
+                    list.innerHTML = '<div class="empty-state">Nenhum registo ainda. Crie o primeiro!</div>';
                     return;
                 }
                 snapshot.forEach(doc => {
@@ -248,7 +249,7 @@
                     list.appendChild(div);
                 });
             } catch (error) {
-                showError('Erro ao carregar: ' + error.message);
+                showError('❌ Erro ao carregar: ' + error.message);
             }
         }
 
@@ -261,6 +262,8 @@
         function showLogin() {
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('appScreen').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
         }
 
         function showRegister() {
@@ -268,16 +271,11 @@
             document.getElementById('registerForm').style.display = 'block';
         }
 
-        function showLoginForm() {
-            document.getElementById('loginForm').style.display = 'block';
-            document.getElementById('registerForm').style.display = 'none';
-        }
-
         function switchTab(tab) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + tab).classList.add('active');
-            event.target.classList.add('active');
+            document.querySelectorAll('.tab-btn')[tab === 'novo' ? 0 : 1].classList.add('active');
             if (tab === 'lista') loadRecords();
         }
 
