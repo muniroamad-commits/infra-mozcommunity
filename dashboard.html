@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
@@ -140,8 +142,9 @@
             <button class="btn-logout" onclick="logout()">Sair</button>
         </div>
 
-        <div style="background:white; display:flex; gap:4px; padding: 0 20px; border-bottom: 2px solid #eee;">
+        <div style="background:white; display:flex; gap:4px; padding: 0 20px; border-bottom: 2px solid #eee; flex-wrap: wrap;">
             <button class="nav-tab active" id="navRegistos" onclick="switchSection('registos')">📋 Registos</button>
+            <button class="nav-tab" id="navRelatorios" onclick="switchSection('relatorios')">📄 Relatórios</button>
             <button class="nav-tab" id="navContas" onclick="switchSection('contas')">👤 Gerir Contas</button>
         </div>
 
@@ -180,6 +183,76 @@
             <div class="content">
                 <div class="records-grid" id="recordsGrid"></div>
                 <div id="mapContainer" style="display:none; height: 70vh; border-radius: 10px; overflow: hidden; border: 1px solid #eee;"></div>
+            </div>
+        </div>
+
+        <div id="sectionRelatorios" style="display: none;">
+            <div class="toolbar">
+                <select id="relProvincia" onchange="renderRelatorio()">
+                    <option value="">Todas Províncias</option>
+                    <option value="Cabo Delgado">Cabo Delgado</option>
+                    <option value="Nampula">Nampula</option>
+                    <option value="Niassa">Niassa</option>
+                </select>
+                <select id="relStatus" onchange="renderRelatorio()">
+                    <option value="">Todos Status</option>
+                    <option value="planejado">Planeado</option>
+                    <option value="construcao">Em Construção</option>
+                    <option value="concluido">Concluído</option>
+                </select>
+                <select id="relCategoria" onchange="renderRelatorio()">
+                    <option value="">Todas Categorias</option>
+                    <option value="publica">🏛️ Pública</option>
+                    <option value="comunitaria">🤝 Comunitária</option>
+                </select>
+                <select id="relTecnico" onchange="renderRelatorio()">
+                    <option value="">Todos Técnicos</option>
+                </select>
+            </div>
+            <div class="toolbar" style="border-top: none; padding-top: 0;">
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                    <label style="font-size:11px; color:#999;">Criado desde</label>
+                    <input type="date" id="relDataInicio" onchange="renderRelatorio()">
+                </div>
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                    <label style="font-size:11px; color:#999;">Criado até</label>
+                    <input type="date" id="relDataFim" onchange="renderRelatorio()">
+                </div>
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                    <label style="font-size:11px; color:#999;">Orçamento gasto mínimo (MZN)</label>
+                    <input type="number" id="relOrcamentoMin" min="0" placeholder="0" oninput="renderRelatorio()">
+                </div>
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                    <label style="font-size:11px; color:#999;">Orçamento gasto máximo (MZN)</label>
+                    <input type="number" id="relOrcamentoMax" min="0" placeholder="Sem limite" oninput="renderRelatorio()">
+                </div>
+                <input type="text" id="relTexto" placeholder="Pesquisar por nome..." oninput="renderRelatorio()" style="flex: 1; min-width: 160px; align-self:flex-end;">
+            </div>
+
+            <div class="stats-bar" id="relStatsBar"></div>
+
+            <div style="padding: 0 20px 12px;">
+                <button class="btn" style="background:#9D212B; width:auto; padding:10px 20px;" onclick="exportarRelatorioPDF()">📄 Exportar PDF</button>
+            </div>
+
+            <div class="content" style="overflow-x:auto;">
+                <table id="relatorioTabela" style="width:100%; border-collapse:collapse; font-size:12px; background:white;">
+                    <thead>
+                        <tr style="background:#f5f5f5; text-align:left;">
+                            <th style="padding:8px; border-bottom:2px solid #ddd;">Nome</th>
+                            <th style="padding:8px; border-bottom:2px solid #ddd;">Técnico</th>
+                            <th style="padding:8px; border-bottom:2px solid #ddd;">Província</th>
+                            <th style="padding:8px; border-bottom:2px solid #ddd;">Distrito</th>
+                            <th style="padding:8px; border-bottom:2px solid #ddd;">Categoria</th>
+                            <th style="padding:8px; border-bottom:2px solid #ddd;">Status</th>
+                            <th style="padding:8px; border-bottom:2px solid #ddd;">Progresso</th>
+                            <th style="padding:8px; border-bottom:2px solid #ddd;">Monitorias</th>
+                            <th style="padding:8px; border-bottom:2px solid #ddd;">Orçamento Gasto (MZN)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="relatorioTabelaBody"></tbody>
+                </table>
+                <div id="relatorioEmptyState" class="empty-state" style="display:none;">Nenhum registo encontrado com estes filtros.</div>
             </div>
         </div>
 
@@ -334,7 +407,9 @@
 
             const usersSnapshot = await db.collection('users').get();
             const filterTecnico = document.getElementById('filterTecnico');
+            const relTecnico = document.getElementById('relTecnico');
             filterTecnico.innerHTML = '<option value="">Todos Técnicos</option>';
+            relTecnico.innerHTML = '<option value="">Todos Técnicos</option>';
 
             usersSnapshot.forEach(userDoc => {
                 const userId = userDoc.id;
@@ -344,6 +419,11 @@
                 opt.value = userId;
                 opt.textContent = userName;
                 filterTecnico.appendChild(opt);
+
+                const opt2 = document.createElement('option');
+                opt2.value = userId;
+                opt2.textContent = userName;
+                relTecnico.appendChild(opt2);
 
                 const unsub = db.collection('users').doc(userId)
                     .collection('infraestruturas').orderBy('criado', 'desc')
@@ -368,9 +448,12 @@
         // ===== GESTÃO DE CONTAS =====
         function switchSection(section) {
             document.getElementById('navRegistos').classList.toggle('active', section === 'registos');
+            document.getElementById('navRelatorios').classList.toggle('active', section === 'relatorios');
             document.getElementById('navContas').classList.toggle('active', section === 'contas');
             document.getElementById('sectionRegistos').style.display = section === 'registos' ? 'block' : 'none';
+            document.getElementById('sectionRelatorios').style.display = section === 'relatorios' ? 'block' : 'none';
             document.getElementById('sectionContas').style.display = section === 'contas' ? 'block' : 'none';
+            if (section === 'relatorios') renderRelatorio();
         }
 
         function renderAccountsList(docs) {
@@ -504,6 +587,11 @@
 
             // Atualizar o mapa com os mesmos registos filtrados
             renderMap(filtrados);
+
+            // Atualizar também o relatório, se a aba estiver visível
+            if (document.getElementById('sectionRelatorios').style.display !== 'none') {
+                renderRelatorio();
+            }
         }
 
         // ===== MAPA (Leaflet + OpenStreetMap, sem necessidade de chave de API) =====
@@ -603,6 +691,172 @@
                 const grupo = L.featureGroup(leafletMarkers);
                 leafletMap.fitBounds(grupo.getBounds().pad(0.2));
             }
+        }
+
+        // ===== RELATÓRIOS =====
+
+        // Soma o orçamento gasto de todas as monitorias/visitas de um registo
+        function calcularOrcamentoTotal(data) {
+            if (!data.visitas || data.visitas.length === 0) return 0;
+            return data.visitas.reduce((total, v) => {
+                const valor = (v.orcamentoGasto !== undefined && v.orcamentoGasto !== null) ? v.orcamentoGasto : 0;
+                return total + valor;
+            }, 0);
+        }
+
+        let ultimoRelatorioFiltrado = [];
+
+        function renderRelatorio() {
+            let todos = [];
+            Object.values(allData).forEach(u => u.records.forEach(r => todos.push({ ...r, tecnico: u.name })));
+
+            todos.sort((a, b) => {
+                const da = a.data.criado?.toDate ? a.data.criado.toDate() : new Date(a.data.criado);
+                const db_ = b.data.criado?.toDate ? b.data.criado.toDate() : new Date(b.data.criado);
+                return db_ - da;
+            });
+
+            // Filtros do relatório
+            const fProv = document.getElementById('relProvincia').value;
+            const fStatus = document.getElementById('relStatus').value;
+            const fCategoria = document.getElementById('relCategoria').value;
+            const fTecnico = document.getElementById('relTecnico').value;
+            const fTexto = document.getElementById('relTexto').value.toLowerCase().trim();
+            const fDataInicio = document.getElementById('relDataInicio').value;
+            const fDataFim = document.getElementById('relDataFim').value;
+            const fOrcMin = document.getElementById('relOrcamentoMin').value;
+            const fOrcMax = document.getElementById('relOrcamentoMax').value;
+
+            let filtrados = todos;
+            if (fProv) filtrados = filtrados.filter(r => r.data.provincia === fProv);
+            if (fStatus) filtrados = filtrados.filter(r => r.data.status === fStatus);
+            if (fCategoria) filtrados = filtrados.filter(r => r.data.categoria === fCategoria);
+            if (fTecnico) filtrados = filtrados.filter(r => r.userId === fTecnico);
+            if (fTexto) filtrados = filtrados.filter(r => (r.data.nome || '').toLowerCase().includes(fTexto));
+
+            if (fDataInicio) {
+                const inicio = new Date(fDataInicio);
+                filtrados = filtrados.filter(r => {
+                    const criado = r.data.criado?.toDate ? r.data.criado.toDate() : new Date(r.data.criado);
+                    return criado >= inicio;
+                });
+            }
+            if (fDataFim) {
+                const fim = new Date(fDataFim);
+                fim.setHours(23, 59, 59, 999);
+                filtrados = filtrados.filter(r => {
+                    const criado = r.data.criado?.toDate ? r.data.criado.toDate() : new Date(r.data.criado);
+                    return criado <= fim;
+                });
+            }
+
+            // Calcular orçamento total de cada registo (usado no filtro e na tabela)
+            filtrados = filtrados.map(r => ({ ...r, orcamentoTotal: calcularOrcamentoTotal(r.data) }));
+
+            if (fOrcMin) filtrados = filtrados.filter(r => r.orcamentoTotal >= parseFloat(fOrcMin));
+            if (fOrcMax) filtrados = filtrados.filter(r => r.orcamentoTotal <= parseFloat(fOrcMax));
+
+            ultimoRelatorioFiltrado = filtrados;
+
+            // Estatísticas do relatório
+            const somaOrcamento = filtrados.reduce((s, r) => s + r.orcamentoTotal, 0);
+            const totalMonitorias = filtrados.reduce((s, r) => s + (r.data.visitas ? r.data.visitas.length : 0), 0);
+
+            document.getElementById('relStatsBar').innerHTML = `
+                <div class="stat-card"><div class="num">${filtrados.length}</div><div class="label">Registos</div></div>
+                <div class="stat-card"><div class="num">${totalMonitorias}</div><div class="label">Monitorias</div></div>
+                <div class="stat-card"><div class="num">${somaOrcamento.toLocaleString('pt-PT')}</div><div class="label">💰 Total Gasto (MZN)</div></div>
+            `;
+
+            // Renderizar tabela
+            const tbody = document.getElementById('relatorioTabelaBody');
+            const emptyState = document.getElementById('relatorioEmptyState');
+            const tabela = document.getElementById('relatorioTabela');
+            tbody.innerHTML = '';
+
+            if (filtrados.length === 0) {
+                tabela.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+            tabela.style.display = 'table';
+            emptyState.style.display = 'none';
+
+            filtrados.forEach(r => {
+                const data = r.data;
+                const numMonitorias = data.visitas ? data.visitas.length : 0;
+                const catLabel = data.categoria === 'publica' ? '🏛️ Pública' : (data.categoria === 'comunitaria' ? '🤝 Comunitária' : '-');
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #eee';
+                tr.innerHTML = `
+                    <td style="padding:8px;">${data.nome || '-'}</td>
+                    <td style="padding:8px;">${r.tecnico}</td>
+                    <td style="padding:8px;">${data.provincia || '-'}</td>
+                    <td style="padding:8px;">${data.distrito || '-'}</td>
+                    <td style="padding:8px;">${catLabel}</td>
+                    <td style="padding:8px;"><span class="badge badge-${data.status}">${data.status}</span></td>
+                    <td style="padding:8px;">${data.progress || 0}%</td>
+                    <td style="padding:8px;">${numMonitorias}</td>
+                    <td style="padding:8px;">${r.orcamentoTotal.toLocaleString('pt-PT')}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function exportarRelatorioPDF() {
+            if (!ultimoRelatorioFiltrado || ultimoRelatorioFiltrado.length === 0) {
+                alert('Não há registos para exportar com os filtros atuais.');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape' });
+
+            // Cabeçalho do relatório
+            doc.setFontSize(14);
+            doc.setTextColor(157, 33, 43); // bordô ADIN
+            doc.text('Portal de Monitoria de Infraestruturas Públicas e Comunitárias', 14, 15);
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Relatório gerado em ${new Date().toLocaleString('pt-PT')}`, 14, 21);
+
+            // Resumo de filtros aplicados
+            const fProv = document.getElementById('relProvincia').value || 'Todas';
+            const fStatus = document.getElementById('relStatus').value || 'Todos';
+            const fCategoria = document.getElementById('relCategoria').value || 'Todas';
+            doc.text(`Filtros: Província: ${fProv} | Status: ${fStatus} | Categoria: ${fCategoria}`, 14, 27);
+
+            const somaOrcamento = ultimoRelatorioFiltrado.reduce((s, r) => s + r.orcamentoTotal, 0);
+            doc.text(`Total de registos: ${ultimoRelatorioFiltrado.length}  |  Orçamento total gasto: ${somaOrcamento.toLocaleString('pt-PT')} MZN`, 14, 33);
+
+            // Tabela
+            const linhas = ultimoRelatorioFiltrado.map(r => {
+                const data = r.data;
+                const catLabel = data.categoria === 'publica' ? 'Pública' : (data.categoria === 'comunitaria' ? 'Comunitária' : '-');
+                return [
+                    data.nome || '-',
+                    r.tecnico,
+                    data.provincia || '-',
+                    data.distrito || '-',
+                    catLabel,
+                    data.status,
+                    `${data.progress || 0}%`,
+                    (data.visitas ? data.visitas.length : 0).toString(),
+                    r.orcamentoTotal.toLocaleString('pt-PT')
+                ];
+            });
+
+            doc.autoTable({
+                startY: 38,
+                head: [['Nome', 'Técnico', 'Província', 'Distrito', 'Categoria', 'Status', 'Progresso', 'Monitorias', 'Orçamento (MZN)']],
+                body: linhas,
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [157, 33, 43] },
+                foot: [['', '', '', '', '', '', '', 'TOTAL', somaOrcamento.toLocaleString('pt-PT')]],
+                footStyles: { fillColor: [250, 168, 66], textColor: [50, 50, 50], fontStyle: 'bold' }
+            });
+
+            doc.save(`relatorio_infraestruturas_${new Date().toISOString().slice(0, 10)}.pdf`);
         }
 
         let selectedRecord = null;
