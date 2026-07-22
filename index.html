@@ -410,6 +410,30 @@
             updatePendingBadge();
         }
 
+        // O Firebase Storage, por padrão, tenta reenviar uma foto várias vezes
+        // antes de desistir (pode demorar MINUTOS em rede fraca/offline).
+        // Esta função corta essa espera ao fim de poucos segundos e entrega
+        // logo a foto à fila local, para a app nunca parecer "pendurada".
+        async function tentarEnviarFoto(userId, recordId, visitId, photo, timeoutMs = 6000) {
+            if (!navigator.onLine) {
+                queuePhoto(userId, recordId, visitId, photo);
+                return null;
+            }
+            try {
+                const storageRef = storage.ref(`fotos/${userId}/${recordId}/${Date.now()}_${photo.name}`);
+                const uploadPromise = storageRef.putString(photo.data, 'data_url')
+                    .then(() => storageRef.getDownloadURL());
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('timeout')), timeoutMs)
+                );
+                const url = await Promise.race([uploadPromise, timeoutPromise]);
+                return { url, data: new Date().toLocaleDateString('pt-PT') };
+            } catch (err) {
+                queuePhoto(userId, recordId, visitId, photo);
+                return null;
+            }
+        }
+
         function queuePhoto(userId, recordId, visitIndex, photo) {
             const pending = getPendingPhotos();
             pending.push({
@@ -652,16 +676,13 @@
                     docRef.set(record); // offline: não bloqueia — o Firestore sincroniza sozinho depois
                 }
 
-                // Fotos: tenta enviar já; se falhar (offline), entra na fila local
+                // Fotos: nunca ficam à espera mais de poucos segundos (ver tentarEnviarFoto)
                 let falhadas = 0;
                 for (let photo of newPhotos) {
-                    try {
-                        const storageRef = storage.ref(`fotos/${currentUser.uid}/${docRef.id}/${Date.now()}_${photo.name}`);
-                        await storageRef.putString(photo.data, 'data_url');
-                        const url = await storageRef.getDownloadURL();
-                        docRef.update({ fotos: firebase.firestore.FieldValue.arrayUnion({ url, data: new Date().toLocaleDateString('pt-PT') }) });
-                    } catch (photoErr) {
-                        queuePhoto(currentUser.uid, docRef.id, null, photo);
+                    const resultado = await tentarEnviarFoto(currentUser.uid, docRef.id, null, photo);
+                    if (resultado) {
+                        docRef.update({ fotos: firebase.firestore.FieldValue.arrayUnion(resultado) });
+                    } else {
                         falhadas++;
                     }
                 }
@@ -693,6 +714,7 @@
             const novoStatus = document.getElementById('monitoriaStatus').value;
             const novoProgress = parseInt(document.getElementById('monitoriaProgress').value) || 0;
             const orcamentoVal = document.getElementById('monitoriaOrcamento').value;
+            const nomeInfraAtual = selectedRecordData ? selectedRecordData.nome : '';
 
             const visit = {
                 visitId,
@@ -706,15 +728,13 @@
             };
 
             try {
+                // Fotos: nunca ficam à espera mais de poucos segundos (ver tentarEnviarFoto)
                 let falhadas = 0;
                 for (let photo of monitoriaPhotos) {
-                    try {
-                        const storageRef = storage.ref(`fotos/${currentUser.uid}/${selectedRecordId}/${Date.now()}_${photo.name}`);
-                        await storageRef.putString(photo.data, 'data_url');
-                        const url = await storageRef.getDownloadURL();
-                        visit.fotos.push({ url, data: new Date().toLocaleDateString('pt-PT') });
-                    } catch (photoErr) {
-                        queuePhoto(currentUser.uid, selectedRecordId, visitId, photo);
+                    const resultado = await tentarEnviarFoto(currentUser.uid, selectedRecordId, visitId, photo);
+                    if (resultado) {
+                        visit.fotos.push(resultado);
+                    } else {
                         falhadas++;
                     }
                 }
@@ -737,12 +757,19 @@
                     escritaFirestore.catch(err => console.warn('Sincronização de monitoria pendente:', err.message));
                 }
 
-                showSuccess(falhadas > 0 ? `✅ Monitoria guardada! 📸 ${falhadas} foto(s) na fila (sem rede).` : '✅ Monitoria guardada!');
                 closeModal('monitoriaModal');
                 document.getElementById('monitoriaForm').reset();
                 monitoriaPhotos = [];
                 document.getElementById('monitoriaPhotoPreview').innerHTML = '';
                 loadRecords();
+
+                // Confirmação visual clara (igual à do Novo Registo)
+                document.getElementById('confirmModalNome').textContent = falhadas > 0
+                    ? `Monitoria de "${nomeInfraAtual}" guardada. 📸 ${falhadas} foto(s) serão enviadas quando houver rede.`
+                    : (navigator.onLine
+                        ? `Monitoria de "${nomeInfraAtual}" guardada com sucesso.`
+                        : `Monitoria de "${nomeInfraAtual}" guardada localmente — sincroniza sozinha quando houver rede.`);
+                openModal('confirmModal');
             } catch (error) {
                 showError('Erro: ' + error.message);
             }
