@@ -295,6 +295,16 @@
         </div>
     </div>
 
+    <!-- MODAL: Confirmação de Registo -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content" style="text-align:center; max-width: 360px;">
+            <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+            <h2 style="font-size: 17px; color: #28a745; margin-bottom: 8px;">Infraestrutura Registada!</h2>
+            <p id="confirmModalNome" style="font-size: 13px; color: #666; margin-bottom: 20px;"></p>
+            <button type="button" class="btn" style="background:#9D212B;" onclick="closeModal('confirmModal')">OK</button>
+        </div>
+    </div>
+
     <!-- MODAL: Ver Detalhe -->
     <div id="detailModal" class="modal">
         <div class="modal-content">
@@ -303,50 +313,6 @@
                 <button class="close-btn" onclick="closeModal('detailModal')">&times;</button>
             </div>
             <div id="detailContent"></div>
-        </div>
-    </div>
-
-    <!-- MODAL: Nova Visita -->
-    <div id="visitModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 style="font-size: 15px;">Nova Visita</h2>
-                <button class="close-btn" onclick="closeModal('visitModal')">&times;</button>
-            </div>
-            <form id="visitForm">
-                <div class="form-group">
-                    <label>Novo Status *</label>
-                    <select id="visitStatus" required>
-                        <option value="planejado">Planeado</option>
-                        <option value="construcao">Em Construção</option>
-                        <option value="concluido">Concluído</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Novo Progresso (%) *</label>
-                    <input type="number" id="visitProgress" min="0" max="100" required>
-                </div>
-                <div class="form-group">
-                    <label>Orçamento Gasto (MZN)</label>
-                    <input type="number" id="visitOrcamento" min="0" step="0.01" placeholder="Ex: 15000">
-                </div>
-                <div class="form-group">
-                    <label>Observações</label>
-                    <textarea id="visitObservacoes" rows="3" placeholder="Anotações desta visita..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Fotos</label>
-                    <div style="display: flex; gap: 8px;">
-                        <button type="button" class="btn" style="background:#6c757d; flex:1;" onclick="document.getElementById('visitPhotoInputFile').click()">📁 Escolher Ficheiro</button>
-                        <button type="button" class="btn" style="background:#28a745; flex:1;" onclick="document.getElementById('visitPhotoInputCamera').click()">📷 Abrir Câmara</button>
-                    </div>
-                    <input type="file" id="visitPhotoInputFile" accept="image/*" multiple style="display:none;" onchange="addVisitPhotoPreview(event)">
-                    <input type="file" id="visitPhotoInputCamera" accept="image/*" capture="environment" style="display:none;" onchange="addVisitPhotoPreview(event)">
-                    <div id="visitPhotoPreview" class="photo-grid"></div>
-                </div>
-                <button type="submit" class="btn btn-success">Guardar Visita</button>
-                <button type="button" class="btn btn-secondary" onclick="closeModal('visitModal')">Cancelar</button>
-            </form>
         </div>
     </div>
 
@@ -420,7 +386,6 @@
         let selectedRecordId = null;
         let selectedRecordData = null;
         let newPhotos = [];
-        let visitPhotos = [];
         let monitoriaPhotos = [];
         let isOnline = navigator.onLine;
 
@@ -644,8 +609,9 @@
                 return;
             }
 
+            const nomeInfra = document.getElementById('nome').value;
             const record = {
-                nome: document.getElementById('nome').value,
+                nome: nomeInfra,
                 tipo: document.getElementById('tipo').value,
                 categoria: document.getElementById('categoria').value,
                 provincia: document.getElementById('provincia').value,
@@ -666,88 +632,45 @@
             try {
                 showSuccess(navigator.onLine ? 'Guardando...' : '📴 Sem rede — a guardar localmente, sincroniza automaticamente!');
 
-                // Firestore trata sozinho de guardar offline e sincronizar depois
-                const docRef = await db.collection('users').doc(currentUser.uid)
-                    .collection('infraestruturas').add(record);
+                // IMPORTANTE: gerar o ID do documento localmente (doc() sem argumentos) em vez de usar add().
+                // Isto funciona sempre, mesmo sem internet — add() ficaria "pendurado" à espera do
+                // servidor antes de dar o ID, o que trava a app quando está offline.
+                const docRef = db.collection('users').doc(currentUser.uid)
+                    .collection('infraestruturas').doc();
+
+                if (navigator.onLine) {
+                    await docRef.set(record); // online: espera confirmação real
+                } else {
+                    docRef.set(record); // offline: não bloqueia — o Firestore sincroniza sozinho depois
+                }
 
                 // Fotos: tenta enviar já; se falhar (offline), entra na fila local
-                let enviadas = 0, falhadas = 0;
+                let falhadas = 0;
                 for (let photo of newPhotos) {
                     try {
                         const storageRef = storage.ref(`fotos/${currentUser.uid}/${docRef.id}/${Date.now()}_${photo.name}`);
                         await storageRef.putString(photo.data, 'data_url');
                         const url = await storageRef.getDownloadURL();
-                        await docRef.update({ fotos: firebase.firestore.FieldValue.arrayUnion({ url, data: new Date().toLocaleDateString('pt-PT') }) });
-                        enviadas++;
+                        docRef.update({ fotos: firebase.firestore.FieldValue.arrayUnion({ url, data: new Date().toLocaleDateString('pt-PT') }) });
                     } catch (photoErr) {
                         queuePhoto(currentUser.uid, docRef.id, null, photo);
                         falhadas++;
                     }
                 }
 
-                if (falhadas > 0) {
-                    showSuccess(`✅ Registo guardado! 📸 ${falhadas} foto(s) na fila (sem rede) — serão enviadas automaticamente.`);
-                } else {
-                    showSuccess('✅ Registo guardado!');
-                }
                 document.getElementById('formRegisto').reset();
                 newPhotos = [];
                 document.getElementById('photoPreview').innerHTML = '';
                 document.getElementById('gpsStatus').textContent = 'Ainda não captado';
                 document.getElementById('gpsStatus').style.background = '#f5f5f5';
                 document.getElementById('btnCaptureGPS').textContent = '📍 Captar Coordenadas GPS';
+
+                // Confirmação visual clara
+                document.getElementById('confirmModalNome').textContent = falhadas > 0
+                    ? `"${nomeInfra}" — 📸 ${falhadas} foto(s) serão enviadas quando houver rede.`
+                    : `"${nomeInfra}" foi guardada com sucesso.`;
+                openModal('confirmModal');
                 switchTab('lista');
-            } catch (error) {
-                showError('Erro: ' + error.message);
-            }
-        });
-
-        // NOVA VISITA
-        document.getElementById('visitForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!selectedRecordId) return;
-
-            const visitId = Date.now() + '_' + Math.random().toString(36).slice(2);
-            const orcamentoVal = document.getElementById('visitOrcamento').value;
-            const visit = {
-                visitId,
-                data: new Date(),
-                status: document.getElementById('visitStatus').value,
-                progress: parseInt(document.getElementById('visitProgress').value),
-                orcamentoGasto: orcamentoVal ? parseFloat(orcamentoVal) : null,
-                observacoes: document.getElementById('visitObservacoes').value,
-                fotos: []
-            };
-
-            try {
-                // Fotos que conseguirem enviar já vão diretas; as outras entram na fila
-                let falhadas = 0;
-                for (let photo of visitPhotos) {
-                    try {
-                        const storageRef = storage.ref(`fotos/${currentUser.uid}/${selectedRecordId}/${Date.now()}_${photo.name}`);
-                        await storageRef.putString(photo.data, 'data_url');
-                        const url = await storageRef.getDownloadURL();
-                        visit.fotos.push({ url, data: new Date().toLocaleDateString('pt-PT') });
-                    } catch (photoErr) {
-                        queuePhoto(currentUser.uid, selectedRecordId, visitId, photo);
-                        falhadas++;
-                    }
-                }
-
-                await db.collection('users').doc(currentUser.uid)
-                    .collection('infraestruturas').doc(selectedRecordId)
-                    .update({
-                        visitas: firebase.firestore.FieldValue.arrayUnion(visit),
-                        status: visit.status,
-                        progress: visit.progress
-                    });
-
-                showSuccess(falhadas > 0 ? `✅ Visita guardada! 📸 ${falhadas} foto(s) na fila (sem rede).` : '✅ Visita guardada!');
-                closeModal('visitModal');
-                document.getElementById('visitForm').reset();
-                visitPhotos = [];
-                document.getElementById('visitPhotoPreview').innerHTML = '';
-                loadRecords();
             } catch (error) {
                 showError('Erro: ' + error.message);
             }
@@ -788,13 +711,23 @@
                     }
                 }
 
-                await db.collection('users').doc(currentUser.uid)
+                const escritaFirestore = db.collection('users').doc(currentUser.uid)
                     .collection('infraestruturas').doc(selectedRecordId)
                     .update({
                         visitas: firebase.firestore.FieldValue.arrayUnion(visit),
                         status: novoStatus,
                         progress: novoProgress
                     });
+
+                // IMPORTANTE: só esperamos a confirmação do servidor quando há rede.
+                // Offline, o Firestore já guardou a alteração localmente e sincroniza
+                // sozinho mais tarde — esperar (`await`) aqui deixaria a app "pendurada"
+                // indefinidamente sem rede, parecendo que a Monitoria não foi guardada.
+                if (navigator.onLine) {
+                    await escritaFirestore;
+                } else {
+                    escritaFirestore.catch(err => console.warn('Sincronização de monitoria pendente:', err.message));
+                }
 
                 showSuccess(falhadas > 0 ? `✅ Monitoria guardada! 📸 ${falhadas} foto(s) na fila (sem rede).` : '✅ Monitoria guardada!');
                 closeModal('monitoriaModal');
@@ -1046,7 +979,6 @@
 
                 <div style="margin-top: 15px; display: flex; gap: 8px; flex-wrap: wrap;">
                     <button type="button" class="btn" style="background:#FAA842; flex: 1; padding: 10px; min-width: 120px;" onclick="openMonitoriaModal()">📊 Monitoria</button>
-                    <button type="button" class="btn btn-success" style="flex: 1; padding: 10px; min-width: 120px;" onclick="openVisitModal()">➕ Nova Visita</button>
                     <button type="button" class="btn btn-danger" style="flex: 1; padding: 10px; min-width: 120px;" onclick="deleteRecord('${id}')">🗑️ Eliminar</button>
                 </div>
             `;
@@ -1169,28 +1101,6 @@
             `).join('');
         }
 
-        function addVisitPhotoPreview(event) {
-            const files = event.target.files;
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    visitPhotos.push({ name: file.name, data: e.target.result });
-                    updateVisitPhotoPreview();
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        function updateVisitPhotoPreview() {
-            const preview = document.getElementById('visitPhotoPreview');
-            preview.innerHTML = visitPhotos.map((photo, idx) => `
-                <div class="photo-item">
-                    <img src="${photo.data}" alt="Preview">
-                    <button type="button" class="photo-item-remove" onclick="visitPhotos.splice(${idx}, 1); updateVisitPhotoPreview();">✕</button>
-                </div>
-            `).join('');
-        }
-
         function addMonitoriaPhotoPreview(event) {
             const files = event.target.files;
             Array.from(files).forEach(file => {
@@ -1242,14 +1152,6 @@
 
         function closeModal(id) {
             document.getElementById(id).classList.remove('show');
-        }
-
-        function openVisitModal() {
-            if (!selectedRecordId) return;
-            visitPhotos = [];
-            document.getElementById('visitPhotoPreview').innerHTML = '';
-            document.getElementById('visitForm').reset();
-            openModal('visitModal');
         }
 
         function showLoginScreen() {
