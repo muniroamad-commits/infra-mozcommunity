@@ -122,7 +122,7 @@
                     </div>
                     <div class="form-group">
                         <label>
-                            <input type="checkbox" id="isSupervisor"> Sou Supervisor
+                            <input type="checkbox" id="isAdmin"> Sou Administrador
                         </label>
                     </div>
                     <button type="submit" class="btn btn-success">Criar Conta</button>
@@ -148,7 +148,7 @@
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab('novo')">➕ Novo</button>
                 <button class="tab-btn" onclick="switchTab('lista')">📋 Meus</button>
-                <button class="tab-btn" id="tabSupervisor" style="display: none;" onclick="switchTab('supervisor')">👥 Supervisor</button>
+                <button class="tab-btn" id="tabAdmin" style="display: none;" onclick="switchTab('admin')">👑 Administrador</button>
             </div>
 
             <!-- TAB: NOVO REGISTO -->
@@ -255,25 +255,25 @@
             </div>
 
             <!-- TAB: SUPERVISOR -->
-            <div id="tab-supervisor" class="tab-content">
-                <h2 style="margin-bottom: 8px; font-size: 15px;">Todos os Registos <span id="supervisorLiveDot" style="font-size: 10px; color: #28a745;">🟢 tempo real</span></h2>
+            <div id="tab-admin" class="tab-content">
+                <h2 style="margin-bottom: 8px; font-size: 15px;">Todos os Registos <span id="adminLiveDot" style="font-size: 10px; color: #28a745;">🟢 tempo real</span></h2>
 
                 <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-                    <select id="filterProvincia" onchange="renderSupervisorList()" style="flex: 1; min-width: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px;">
+                    <select id="filterProvincia" onchange="renderAdminList()" style="flex: 1; min-width: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px;">
                         <option value="">Todas Províncias</option>
                         <option value="Cabo Delgado">Cabo Delgado</option>
                         <option value="Nampula">Nampula</option>
                         <option value="Niassa">Niassa</option>
                     </select>
-                    <select id="filterStatus" onchange="renderSupervisorList()" style="flex: 1; min-width: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px;">
+                    <select id="filterStatus" onchange="renderAdminList()" style="flex: 1; min-width: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px;">
                         <option value="">Todos Status</option>
                         <option value="planejado">Planeado</option>
                         <option value="construcao">Em Construção</option>
                         <option value="concluido">Concluído</option>
                     </select>
                 </div>
-                <div id="supervisorStats" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;"></div>
-                <div id="supervisorList"></div>
+                <div id="adminStats" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;"></div>
+                <div id="adminList"></div>
             </div>
         </div>
     </div>
@@ -346,7 +346,7 @@
         });
 
         let currentUser = null;
-        let isSupervisor = false;
+        let isAdmin = false;
         let selectedRecordId = null;
         let newPhotos = [];
         let visitPhotos = [];
@@ -520,7 +520,7 @@
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
-                checkIfSupervisor();
+                checkIfAdmin();
             } else {
                 showLoginScreen();
             }
@@ -544,14 +544,15 @@
             const name = document.getElementById('regName').value;
             const email = document.getElementById('regEmail').value;
             const password = document.getElementById('regPassword').value;
-            const supervisor = document.getElementById('isSupervisor').checked;
+            const supervisor = document.getElementById('isAdmin').checked;
             try {
                 const result = await auth.createUserWithEmailAndPassword(email, password);
                 await result.user.updateProfile({ displayName: name });
                 await db.collection('users').doc(result.user.uid).set({
                     name: name,
                     email: email,
-                    isSupervisor: supervisor,
+                    isAdmin: supervisor,
+                    ativo: true,
                     createdAt: new Date()
                 });
                 showSuccess('Conta criada!');
@@ -737,16 +738,16 @@
         // Em vez de "buscar uma vez", usamos onSnapshot: o Firestore avisa-nos
         // automaticamente sempre que um técnico cria/edita um registo ou visita,
         // sem precisar de recarregar a página.
-        let supervisorUnsubscribes = [];
-        let supervisorData = {}; // { userId: { name, records: [...] } }
+        let adminUnsubscribes = [];
+        let adminDataMap = {}; // { userId: { name, records: [...] } }
 
-        async function loadSupervisorData() {
-            if (!isSupervisor) return;
+        async function loadAdminData() {
+            if (!isAdmin) return;
 
             // Limpar listeners antigos antes de criar novos (evita duplicações)
-            supervisorUnsubscribes.forEach(unsub => unsub());
-            supervisorUnsubscribes = [];
-            supervisorData = {};
+            adminUnsubscribes.forEach(unsub => unsub());
+            adminUnsubscribes = [];
+            adminDataMap = {};
 
             try {
                 const usersSnapshot = await db.collection('users').get();
@@ -759,25 +760,25 @@
                     const unsub = db.collection('users').doc(userId)
                         .collection('infraestruturas').orderBy('criado', 'desc')
                         .onSnapshot(snapshot => {
-                            supervisorData[userId] = {
+                            adminDataMap[userId] = {
                                 name: userName,
                                 records: snapshot.docs.map(d => ({ id: d.id, data: d.data() }))
                             };
-                            renderSupervisorList();
+                            renderAdminList();
                         }, error => {
                             console.warn('Listener supervisor falhou para', userName, error.message);
                         });
 
-                    supervisorUnsubscribes.push(unsub);
+                    adminUnsubscribes.push(unsub);
                 });
             } catch (error) {
                 showError('Erro: ' + error.message);
             }
         }
 
-        function renderSupervisorList() {
-            const list = document.getElementById('supervisorList');
-            const statsBox = document.getElementById('supervisorStats');
+        function renderAdminList() {
+            const list = document.getElementById('adminList');
+            const statsBox = document.getElementById('adminStats');
             if (!list) return;
 
             const filtroProvincia = document.getElementById('filterProvincia')?.value || '';
@@ -785,7 +786,7 @@
 
             // Juntar todos os registos de todos os técnicos numa lista só
             let todos = [];
-            Object.values(supervisorData).forEach(user => {
+            Object.values(adminDataMap).forEach(user => {
                 user.records.forEach(r => todos.push({ ...r, tecnico: user.name }));
             });
 
@@ -911,15 +912,24 @@
         }
 
         // VERIFICAR SUPERVISOR
-        async function checkIfSupervisor() {
+        async function checkIfAdmin() {
             try {
                 const userDoc = await db.collection('users').doc(currentUser.uid).get();
+
+                // Verificar se a conta foi desativada por um Administrador
+                if (userDoc.exists && userDoc.data().ativo === false) {
+                    await auth.signOut();
+                    showLoginScreen();
+                    showError('🚫 A sua conta foi desativada. Contacte o Administrador.');
+                    return;
+                }
+
                 if (userDoc.exists) {
-                    isSupervisor = userDoc.data().isSupervisor || false;
-                    document.getElementById('tabSupervisor').style.display = isSupervisor ? 'block' : 'none';
+                    isAdmin = userDoc.data().isAdmin || false;
+                    document.getElementById('tabAdmin').style.display = isAdmin ? 'block' : 'none';
                 }
                 showAppScreen();
-                document.getElementById('userInfo').textContent = `${currentUser.displayName} ${isSupervisor ? '(Supervisor)' : ''}`;
+                document.getElementById('userInfo').textContent = `${currentUser.displayName} ${isAdmin ? '(Administrador)' : ''}`;
                 loadRecords();
             } catch (error) {
                 showAppScreen();
@@ -1003,7 +1013,7 @@
             document.getElementById('tab-' + tab).classList.add('active');
             event.target.classList.add('active');
             if (tab === 'lista') loadRecords();
-            if (tab === 'supervisor') loadSupervisorData();
+            if (tab === 'admin') loadAdminData();
         }
 
         function openModal(id) {
@@ -1040,8 +1050,8 @@
         }
 
         function logout() {
-            supervisorUnsubscribes.forEach(unsub => unsub());
-            supervisorUnsubscribes = [];
+            adminUnsubscribes.forEach(unsub => unsub());
+            adminUnsubscribes = [];
             auth.signOut();
         }
 
