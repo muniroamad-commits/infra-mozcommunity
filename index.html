@@ -346,6 +346,38 @@
         </div>
     </div>
 
+    <!-- MODAL: Monitoria Rápida (só status + foto) -->
+    <div id="monitoriaModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="font-size: 15px;">📊 Monitoria</h2>
+                <button class="close-btn" onclick="closeModal('monitoriaModal')">&times;</button>
+            </div>
+            <form id="monitoriaForm">
+                <div class="form-group">
+                    <label>Novo Status *</label>
+                    <select id="monitoriaStatus" required>
+                        <option value="planejado">Planeado</option>
+                        <option value="construcao">Em Construção</option>
+                        <option value="concluido">Concluído</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Fotos</label>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn" style="background:#6c757d; flex:1;" onclick="document.getElementById('monitoriaPhotoInputFile').click()">📁 Escolher Ficheiro</button>
+                        <button type="button" class="btn" style="background:#28a745; flex:1;" onclick="document.getElementById('monitoriaPhotoInputCamera').click()">📷 Abrir Câmara</button>
+                    </div>
+                    <input type="file" id="monitoriaPhotoInputFile" accept="image/*" multiple style="display:none;" onchange="addMonitoriaPhotoPreview(event)">
+                    <input type="file" id="monitoriaPhotoInputCamera" accept="image/*" capture="environment" style="display:none;" onchange="addMonitoriaPhotoPreview(event)">
+                    <div id="monitoriaPhotoPreview" class="photo-grid"></div>
+                </div>
+                <button type="submit" class="btn" style="background:#FAA842;">Guardar Monitoria</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('monitoriaModal')">Cancelar</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         // FIREBASE CONFIG
         const firebaseConfig = {
@@ -370,8 +402,10 @@
         let currentUser = null;
         let isAdmin = false;
         let selectedRecordId = null;
+        let selectedRecordData = null;
         let newPhotos = [];
         let visitPhotos = [];
+        let monitoriaPhotos = [];
         let isOnline = navigator.onLine;
 
         // ===== OFFLINE: FILA DE FOTOS PENDENTES (localStorage) =====
@@ -701,6 +735,57 @@
             }
         });
 
+        // MONITORIA RÁPIDA (só status + fotos, mantém o progresso atual, fica no mesmo histórico)
+        document.getElementById('monitoriaForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!selectedRecordId) return;
+
+            const visitId = Date.now() + '_' + Math.random().toString(36).slice(2);
+            const novoStatus = document.getElementById('monitoriaStatus').value;
+            const progressoAtual = selectedRecordData ? (selectedRecordData.progress || 0) : 0;
+
+            const visit = {
+                visitId,
+                tipo: 'monitoria', // marca este registo do histórico como vindo da Monitoria rápida
+                data: new Date(),
+                status: novoStatus,
+                progress: progressoAtual,
+                observacoes: '',
+                fotos: []
+            };
+
+            try {
+                let falhadas = 0;
+                for (let photo of monitoriaPhotos) {
+                    try {
+                        const storageRef = storage.ref(`fotos/${currentUser.uid}/${selectedRecordId}/${Date.now()}_${photo.name}`);
+                        await storageRef.putString(photo.data, 'data_url');
+                        const url = await storageRef.getDownloadURL();
+                        visit.fotos.push({ url, data: new Date().toLocaleDateString('pt-PT') });
+                    } catch (photoErr) {
+                        queuePhoto(currentUser.uid, selectedRecordId, visitId, photo);
+                        falhadas++;
+                    }
+                }
+
+                await db.collection('users').doc(currentUser.uid)
+                    .collection('infraestruturas').doc(selectedRecordId)
+                    .update({
+                        visitas: firebase.firestore.FieldValue.arrayUnion(visit),
+                        status: novoStatus
+                    });
+
+                showSuccess(falhadas > 0 ? `✅ Monitoria guardada! 📸 ${falhadas} foto(s) na fila (sem rede).` : '✅ Monitoria guardada!');
+                closeModal('monitoriaModal');
+                document.getElementById('monitoriaForm').reset();
+                monitoriaPhotos = [];
+                document.getElementById('monitoriaPhotoPreview').innerHTML = '';
+                loadRecords();
+            } catch (error) {
+                showError('Erro: ' + error.message);
+            }
+        });
+
         // CASCATA: Actualizar Distritos
         function updateDistritos() {
             const provincia = document.getElementById('provincia').value;
@@ -886,16 +971,19 @@
         // VER DETALHE
         function showDetail(id, data) {
             selectedRecordId = id;
+            selectedRecordData = data;
             document.getElementById('detailTitle').textContent = data.nome;
 
             let visitsHTML = '';
             if (data.visitas && data.visitas.length > 0) {
-                visitsHTML = '<h4 style="margin-top: 15px; margin-bottom: 10px; font-size: 13px;">Visitas</h4><div class="visit-timeline">';
+                visitsHTML = '<h4 style="margin-top: 15px; margin-bottom: 10px; font-size: 13px;">Histórico de Monitorias/Visitas</h4><div class="visit-timeline">';
                 data.visitas.forEach((visit, idx) => {
                     const visitDate = visit.data.toDate ? visit.data.toDate() : new Date(visit.data);
+                    const ehMonitoria = visit.tipo === 'monitoria';
+                    const rotulo = ehMonitoria ? '📊 Monitoria' : '➕ Visita';
                     visitsHTML += `
                         <div class="visit-item">
-                            <div class="visit-item-date">Visita ${idx + 2} - ${visitDate.toLocaleString('pt-PT')}</div>
+                            <div class="visit-item-date">${rotulo} ${idx + 2} - ${visitDate.toLocaleString('pt-PT')}</div>
                             <div class="visit-item-status">
                                 <span class="badge badge-${visit.status}">${visit.status}</span> ${visit.progress}%
                             </div>
@@ -934,9 +1022,10 @@
 
                 ${visitsHTML}
 
-                <div style="margin-top: 15px; display: flex; gap: 8px;">
-                    <button type="button" class="btn btn-success" style="flex: 1; padding: 10px;" onclick="openVisitModal()">➕ Nova Visita</button>
-                    <button type="button" class="btn btn-danger" style="flex: 1; padding: 10px;" onclick="deleteRecord('${id}')">🗑️ Eliminar</button>
+                <div style="margin-top: 15px; display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" class="btn" style="background:#FAA842; flex: 1; padding: 10px; min-width: 120px;" onclick="openMonitoriaModal()">📊 Monitoria</button>
+                    <button type="button" class="btn btn-success" style="flex: 1; padding: 10px; min-width: 120px;" onclick="openVisitModal()">➕ Nova Visita</button>
+                    <button type="button" class="btn btn-danger" style="flex: 1; padding: 10px; min-width: 120px;" onclick="deleteRecord('${id}')">🗑️ Eliminar</button>
                 </div>
             `;
             openModal('detailModal');
@@ -1078,6 +1167,40 @@
                     <button type="button" class="photo-item-remove" onclick="visitPhotos.splice(${idx}, 1); updateVisitPhotoPreview();">✕</button>
                 </div>
             `).join('');
+        }
+
+        function addMonitoriaPhotoPreview(event) {
+            const files = event.target.files;
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    monitoriaPhotos.push({ name: file.name, data: e.target.result });
+                    updateMonitoriaPhotoPreview();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function updateMonitoriaPhotoPreview() {
+            const preview = document.getElementById('monitoriaPhotoPreview');
+            preview.innerHTML = monitoriaPhotos.map((photo, idx) => `
+                <div class="photo-item">
+                    <img src="${photo.data}" alt="Preview">
+                    <button type="button" class="photo-item-remove" onclick="monitoriaPhotos.splice(${idx}, 1); updateMonitoriaPhotoPreview();">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function openMonitoriaModal() {
+            if (!selectedRecordId) return;
+            monitoriaPhotos = [];
+            document.getElementById('monitoriaPhotoPreview').innerHTML = '';
+            document.getElementById('monitoriaForm').reset();
+            // Pré-selecionar o status atual do registo
+            if (selectedRecordData) {
+                document.getElementById('monitoriaStatus').value = selectedRecordData.status || 'planejado';
+            }
+            openModal('monitoriaModal');
         }
 
         // UI
