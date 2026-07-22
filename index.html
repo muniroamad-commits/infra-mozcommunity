@@ -260,7 +260,7 @@
                         <div id="photoPreview" class="photo-grid"></div>
                     </div>
 
-                    <button type="submit" class="btn">Guardar Registo</button>
+                    <button type="submit" id="btnGuardarRegisto" class="btn">Guardar Registo</button>
                 </form>
             </div>
 
@@ -302,7 +302,7 @@
     </div>
 
     <!-- MODAL: Confirmação de Registo -->
-    <div id="confirmModal" class="modal">
+    <div id="confirmModal" class="modal" style="z-index: 2000;">
         <div class="modal-content" style="text-align:center; max-width: 360px;">
             <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
             <h2 style="font-size: 17px; color: #28a745; margin-bottom: 8px;">Infraestrutura Registada!</h2>
@@ -362,7 +362,7 @@
                     <input type="file" id="monitoriaPhotoInputCamera" accept="image/*" capture="environment" style="display:none;" onchange="addMonitoriaPhotoPreview(event)">
                     <div id="monitoriaPhotoPreview" class="photo-grid"></div>
                 </div>
-                <button type="submit" class="btn" style="background:#FAA842;">Guardar Monitoria</button>
+                <button type="submit" id="btnGuardarMonitoria" class="btn" style="background:#FAA842;">Guardar Monitoria</button>
                 <button type="button" class="btn btn-secondary" onclick="closeModal('monitoriaModal')">Cancelar</button>
             </form>
         </div>
@@ -641,6 +641,11 @@
                 return;
             }
 
+            const btnGuardarRegisto = document.getElementById('btnGuardarRegisto');
+            if (btnGuardarRegisto.disabled) return;
+            btnGuardarRegisto.disabled = true;
+            btnGuardarRegisto.textContent = '⏳ A guardar...';
+
             const nomeInfra = document.getElementById('nome').value;
             const record = {
                 nome: nomeInfra,
@@ -702,6 +707,9 @@
                 switchTab('lista');
             } catch (error) {
                 showError('Erro: ' + error.message);
+            } finally {
+                btnGuardarRegisto.disabled = false;
+                btnGuardarRegisto.textContent = 'Guardar Registo';
             }
         });
 
@@ -709,6 +717,13 @@
         document.getElementById('monitoriaForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!selectedRecordId) return;
+
+            // Impedir cliques repetidos (era isto que estava a criar várias monitorias
+            // iguais quando a pessoa clicava mais do que uma vez por a app parecer parada)
+            const btnGuardar = document.getElementById('btnGuardarMonitoria');
+            if (btnGuardar.disabled) return;
+            btnGuardar.disabled = true;
+            btnGuardar.textContent = '⏳ A guardar...';
 
             const visitId = Date.now() + '_' + Math.random().toString(36).slice(2);
             const novoStatus = document.getElementById('monitoriaStatus').value;
@@ -757,7 +772,10 @@
                     escritaFirestore.catch(err => console.warn('Sincronização de monitoria pendente:', err.message));
                 }
 
+                // Fechar TUDO (monitoria e o detalhe por baixo) antes de mostrar a confirmação,
+                // para a confirmação nunca ficar escondida atrás de outro modal aberto
                 closeModal('monitoriaModal');
+                closeModal('detailModal');
                 document.getElementById('monitoriaForm').reset();
                 monitoriaPhotos = [];
                 document.getElementById('monitoriaPhotoPreview').innerHTML = '';
@@ -772,6 +790,9 @@
                 openModal('confirmModal');
             } catch (error) {
                 showError('Erro: ' + error.message);
+            } finally {
+                btnGuardar.disabled = false;
+                btnGuardar.textContent = 'Guardar Monitoria';
             }
         });
 
