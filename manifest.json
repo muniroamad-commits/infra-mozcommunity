@@ -1,93 +1,21 @@
 {
   "name": "Portal de Monitoria de Infraestruturas do Projecto MozCommunity",
   "short_name": "Monitoria ADIN",
-  "description": "App de monitorização de infraestruturas públicas e comunitárias, com captura de fotos, GPS e sincronização em tempo real",
   "start_url": "/",
-  "id": "/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
   "background_color": "#ffffff",
   "theme_color": "#9D212B",
-  "categories": [
-    "productivity",
-    "utilities"
-  ],
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "type": "image/png"
     }
-  ],
-  "screenshots": [
-    {
-      "src": "screenshot-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    },
-    {
-      "src": "screenshot-narrow.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Novo Registo",
-      "short_name": "Novo",
-      "description": "Criar novo registo de infraestrutura",
-      "url": "/?tab=novo",
-      "icons": [
-        {
-          "src": "shortcut-novo.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Meus Registos",
-      "short_name": "Registos",
-      "description": "Ver meus registos de campo",
-      "url": "/?tab=lista",
-      "icons": [
-        {
-          "src": "shortcut-lista.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ]
-    }
-  ],
-  "share_target": {
-    "action": "/share",
-    "method": "POST",
-    "enctype": "multipart/form-data",
-    "params": {
-      "files": [
-        {
-          "name": "media",
-          "accept": [
-            "image/*"
-          ]
-        }
-      ]
-    }
-  }
+  ]
 }

@@ -1,5 +1,5 @@
-// MozCommunity Service Worker v10 - Rede primeiro (sempre atualizado), cache como reserva offline
-const CACHE_NAME = 'mozcommunity-v12';
+// MozCommunity Service Worker v13 - Rede primeiro (sempre atualizado), cache como reserva offline
+const CACHE_NAME = 'mozcommunity-v13';
 const urlsToCache = [
   './',
   './index.html',
@@ -9,10 +9,6 @@ const urlsToCache = [
   './apple-touch-icon.png',
   './favicon-32.png',
   './favicon-16.png',
-  './screenshot-wide.png',
-  './screenshot-narrow.png',
-  './shortcut-novo.png',
-  './shortcut-lista.png',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js',
@@ -30,7 +26,7 @@ self.addEventListener('install', (event) => {
       );
     })
   );
-  self.skipWaiting(); // ativa a nova versão imediatamente, sem esperar que todos os separadores fechem
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -39,15 +35,14 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames
           .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name)) // limpa versões antigas do cache
+          .map((name) => caches.delete(name))
       );
     })
   );
-  self.clients.claim(); // toma controlo imediato de todas as páginas abertas
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-  // Nunca intercetar pedidos ao Firebase (Auth, Firestore, Storage) — deixar sempre ir direto à rede
   if (event.request.url.includes('firestore.googleapis.com') ||
       event.request.url.includes('firebasestorage.googleapis.com') ||
       event.request.url.includes('identitytoolkit.googleapis.com') ||
@@ -55,11 +50,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ESTRATÉGIA: REDE PRIMEIRO
-  // Tenta sempre buscar a versão mais recente da internet.
-  // Só usa o que está guardado no telemóvel (cache) se não houver rede.
-  // Isto garante que, assim que há internet, a app mostra sempre a versão
-  // mais recente que foi publicada — nunca fica presa numa versão antiga.
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
@@ -72,7 +62,6 @@ self.addEventListener('fetch', (event) => {
         return networkResponse;
       })
       .catch(() => {
-        // Sem rede: usa o que estiver guardado
         return caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) return cachedResponse;
           if (event.request.mode === 'navigate') {
