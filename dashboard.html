@@ -256,6 +256,10 @@
                         <h4 style="font-size:13px; margin-bottom:10px; color:#9D212B;">🏛️ Por Categoria</h4>
                         <canvas id="chartCategoria" height="220"></canvas>
                     </div>
+                    <div style="background:white; border:1px solid #eee; border-radius:10px; padding:14px;">
+                        <h4 style="font-size:13px; margin-bottom:10px; color:#9D212B;">📈 Por Status</h4>
+                        <canvas id="chartStatus" height="220"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -729,7 +733,7 @@
         }
 
         let ultimoRelatorioFiltrado = [];
-        let chartInstances = { orcamento: null, quantidade: null, tipo: null, categoria: null };
+        let chartInstances = { orcamento: null, quantidade: null, tipo: null, categoria: null, status: null };
 
         function renderRelatorio() {
             let todos = [];
@@ -848,6 +852,7 @@
             const porGrupoQuantidade = {};
             const porTipo = {};
             const porCategoria = { publica: 0, comunitaria: 0 };
+            const porStatus = { planejado: 0, construcao: 0, concluido: 0 };
 
             filtrados.forEach(r => {
                 const data = r.data;
@@ -860,6 +865,8 @@
 
                 if (data.categoria === 'publica') porCategoria.publica++;
                 else if (data.categoria === 'comunitaria') porCategoria.comunitaria++;
+
+                if (porStatus[data.status] !== undefined) porStatus[data.status]++;
             });
 
             const coresPaleta = ['#9D212B', '#FAA842', '#3f3fb0', '#28a745', '#ffc107', '#6c757d', '#17a2b8', '#e83e8c'];
@@ -940,6 +947,22 @@
                     plugins: { legend: { position: 'bottom' } }
                 }
             });
+
+            // 5. Por Status (Planeado / Em Construção / Concluído)
+            chartInstances.status = new Chart(document.getElementById('chartStatus'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Planeado', 'Em Construção', 'Concluído'],
+                    datasets: [{
+                        data: [porStatus.planejado, porStatus.construcao, porStatus.concluido],
+                        backgroundColor: ['#adb5bd', '#FAA842', '#28a745']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
         }
 
         function exportarRelatorioPDF() {
@@ -977,17 +1000,19 @@
                 { id: 'chartOrcamento', titulo: 'Orçamento Gasto' },
                 { id: 'chartQuantidade', titulo: 'Nº de Infraestruturas' },
                 { id: 'chartTipo', titulo: 'Por Tipo' },
-                { id: 'chartCategoria', titulo: 'Por Categoria' }
+                { id: 'chartCategoria', titulo: 'Por Categoria' },
+                { id: 'chartStatus', titulo: 'Por Status' }
             ];
 
-            // Grelha 2x2: cada gráfico ocupa metade da largura da página
-            const larguraImg = 130;
-            const alturaImg = 65;
+            // Grelha 3 colunas x 2 linhas (5 gráficos, 1 espaço vazio)
+            const larguraImg = 85;
+            const alturaImg = 55;
             const posicoes = [
                 { x: 14, y: 46 },
-                { x: 152, y: 46 },
-                { x: 14, y: 118 },
-                { x: 152, y: 118 }
+                { x: 105, y: 46 },
+                { x: 196, y: 46 },
+                { x: 14, y: 110 },
+                { x: 105, y: 110 }
             ];
 
             graficosParaExportar.forEach((g, idx) => {
