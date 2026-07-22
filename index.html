@@ -328,43 +328,67 @@
         let newPhotos = [];
         let visitPhotos = [];
 
-        // DADOS DE DIVISÕES ADMINISTRATIVAS
+// DADOS OFICIAIS DE DIVISÕES ADMINISTRATIVAS (INE Moçambique)
         const divisoes = {
             "Cabo Delgado": {
-                "Pemba": ["Pemba Urbana", "Pemba Rural"],
-                "Muatua": ["Muatua"],
-                "Metangula": ["Metangula"],
-                "Ibo": ["Ibo"],
-                "Palma": ["Palma"],
-                "Mocimboa da Praia": ["Mocimboa da Praia"],
-                "Quissanga": ["Quissanga"],
-                "Balama": ["Balama"],
-                "Chiúre": ["Chiúre"],
-                "Macomia": ["Macomia"],
-                "Muidumbe": ["Muidumbe"]
+                "Cidade de Pemba": ["Pemba Urbano"],
+                "Ancuabe": ["Ancuabe", "Metoro", "Meza"],
+                "Balama": ["Balama", "Impiri", "Kwekwe", "Mavala"],
+                "Chiúre": ["Chiúre", "Chiúre Velho", "Katapua", "Mazeze", "Namogelia", "Ocua"],
+                "Ibo": ["Ibo", "Quirimba"],
+                "Macomia": ["Macomia", "Chai", "Mucojo", "Quiterajo"],
+                "Mecúfi": ["Mecúfi", "Murrebue"],
+                "Meluco": ["Meluco", "Muaguide"],
+                "Mocímboa da Praia": ["Mocímboa da Praia", "Diaca", "Mbau"],
+                "Montepuez": ["Cidade de Montepuez", "Mapupulo", "Mirate", "Nairoto", "Namanhumbir"],
+                "Mueda": ["Mueda", "Chapa", "Imbuho", "Negomano", "N'Gapa"],
+                "Muidumbe": ["Muidumbe", "Chitunda", "Miteda"],
+                "Namuno": ["Namuno", "Hucula", "Machoca", "Meloco", "Ncumpe", "Luli"],
+                "Nangade": ["Nangade", "Ntamba"],
+                "Palma": ["Palma", "Olumbe", "Pundanhar", "Quionga"],
+                "Metuge": ["Metuge", "Mieze"],
+                "Quissanga": ["Quissanga", "Bilibiza", "Mahate"]
             },
             "Nampula": {
-                "Nampula": ["Nampula Urbana", "Nampula Rural"],
-                "Angoche": ["Angoche Urbana", "Angoche Rural"],
-                "Inhambane": ["Inhambane"],
-                "Jalasi": ["Jalasi"],
-                "Malema": ["Malema"],
-                "Monapo": ["Monapo"],
-                "Mongicoe": ["Mongicoe"],
-                "Murrupula": ["Murrupula"],
-                "Nacala": ["Nacala Urbana", "Nacala Rural"],
-                "Nacaroa": ["Nacaroa"]
+                "Cidade de Nampula": ["Urbano Central", "Muatala", "Muhala", "Namikopo", "Napipine", "Natikire"],
+                "Angoche": ["Cidade de Angoche", "Aube", "Namaponda", "Boila-Nametoria"],
+                "Eráti": ["Namapa", "Alua", "Namiroa"],
+                "Ilha de Moçambique": ["Cidade Ilha de Moçambique", "Lumbo"],
+                "Lalaua": ["Lalaua", "Meti"],
+                "Malema": ["Malema", "Chihulo", "Mutuali"],
+                "Meconta": ["Meconta", "Corrane", "Namialo", "7 de Abril"],
+                "Mecubúri": ["Mecubúri", "Milhana", "Muite", "Namina"],
+                "Memba": ["Memba", "Chipene", "Lurio", "Mazue"],
+                "Mogincual": ["Mongicuala", "Quinga", "Chunga", "Quixaxe", "Liupo"],
+                "Mogovolas": ["Nametil", "Calipo", "Ilute", "Muatua", "Nanhupo"],
+                "Moma": ["Macone", "Chalaua", "Larde", "Mucuali"],
+                "Monapo": ["Monapo", "Itoculo", "Netia"],
+                "Mossuril": ["Mossuril", "Lunga", "Matibane"],
+                "Muecate": ["Muecate", "Imala", "Muculuone"],
+                "Murrupula": ["Murrupula", "Chinga", "Nehessine"],
+                "Cidade de Nacala Porto": ["Urbano Maiaia", "Urbano Mutiva", "Urbano Muanona"],
+                "Nacala-a-Velha": ["Nacala-a-Velha", "Covo"],
+                "Nacarôa": ["Nacarôa", "Intete", "Saua-Saua"],
+                "Rapale": ["Rapale", "Anchilo", "Mutivaze", "Namaita"],
+                "Ribaué": ["Ribaué", "Kunle", "Iapala"]
             },
             "Niassa": {
-                "Lichinga": ["Lichinga Urbana", "Lichinga Rural"],
-                "Cuamba": ["Cuamba"],
-                "Majune": ["Majune"],
-                "Mandimba": ["Mandimba"],
-                "Marrupa": ["Marrupa"],
-                "Metarica": ["Metarica"],
-                "Muembe": ["Muembe"],
-                "Nipepe": ["Nipepe"],
-                "Sanga": ["Sanga"]
+                "Cidade de Lichinga": ["Lichinga Urbano"],
+                "Cuamba": ["Cidade de Cuamba", "Etatara", "Lurio"],
+                "Lago": ["Metangula", "Cobue", "Lunho", "Maniamba"],
+                "Lichinga": ["Chimbonila", "Lione", "Meponda"],
+                "Majune": ["Majune", "Muaquia", "Nairrubi"],
+                "Mandimba": ["Mandimba", "Mitande"],
+                "Marrupa": ["Marrupa", "Marangira", "Nungo"],
+                "Maúa": ["Maúa", "Maiaca"],
+                "Mavago": ["Mavago", "M'Sawize"],
+                "Mecanhelas": ["Mecanhelas", "Chiuta"],
+                "Mecula": ["Mecula", "Matondovela"],
+                "Metarica": ["Metarica", "Mucumua"],
+                "Muembe": ["Muembe", "Chiconono"],
+                "N'gauma": ["Massangulo", "Itepela"],
+                "Nipepe": ["Nipepe", "Muipite"],
+                "Sanga": ["Sanga", "Lussimbeze", "Macaloge", "Matchedje"]
             }
         };
 
