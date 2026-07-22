@@ -905,7 +905,7 @@
             }
         }
 
-        // VERIFICAR SUPERVISOR
+        // VERIFICAR ADMINISTRADOR
         async function checkIfAdmin() {
             try {
                 const userDoc = await db.collection('users').doc(currentUser.uid).get();
@@ -918,16 +918,20 @@
                     return;
                 }
 
+                // Nome: prioriza o guardado no Firestore (mais fiável que o Auth,
+                // pois contas criadas manualmente no Firebase Console não têm displayName)
+                const nomeExibicao = (userDoc.exists && userDoc.data().name) || currentUser.displayName || currentUser.email || 'Utilizador';
+
                 if (userDoc.exists) {
                     isAdmin = userDoc.data().isAdmin || false;
                     document.getElementById('tabAdmin').style.display = isAdmin ? 'block' : 'none';
                 }
                 showAppScreen();
-                document.getElementById('userInfo').textContent = `${currentUser.displayName} ${isAdmin ? '(Administrador)' : ''}`;
+                document.getElementById('userInfo').textContent = `${nomeExibicao} ${isAdmin ? '(Administrador)' : ''}`;
                 loadRecords();
             } catch (error) {
                 showAppScreen();
-                document.getElementById('userInfo').textContent = currentUser.displayName;
+                document.getElementById('userInfo').textContent = currentUser.displayName || currentUser.email || 'Utilizador';
                 loadRecords();
             }
             updateOnlineStatus();
