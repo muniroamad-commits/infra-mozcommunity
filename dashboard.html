@@ -968,7 +968,49 @@
             const somaOrcamento = ultimoRelatorioFiltrado.reduce((s, r) => s + r.orcamentoTotal, 0);
             doc.text(`Total de registos: ${ultimoRelatorioFiltrado.length}  |  Orçamento total gasto: ${somaOrcamento.toLocaleString('pt-PT')} MZN`, 14, 33);
 
-            // Tabela
+            // ===== GRÁFICOS (capturados diretamente dos canvas já desenhados no ecrã) =====
+            doc.setFontSize(11);
+            doc.setTextColor(157, 33, 43);
+            doc.text('Gráficos', 14, 42);
+
+            const graficosParaExportar = [
+                { id: 'chartOrcamento', titulo: 'Orçamento Gasto' },
+                { id: 'chartQuantidade', titulo: 'Nº de Infraestruturas' },
+                { id: 'chartTipo', titulo: 'Por Tipo' },
+                { id: 'chartCategoria', titulo: 'Por Categoria' }
+            ];
+
+            // Grelha 2x2: cada gráfico ocupa metade da largura da página
+            const larguraImg = 130;
+            const alturaImg = 65;
+            const posicoes = [
+                { x: 14, y: 46 },
+                { x: 152, y: 46 },
+                { x: 14, y: 118 },
+                { x: 152, y: 118 }
+            ];
+
+            graficosParaExportar.forEach((g, idx) => {
+                const canvas = document.getElementById(g.id);
+                if (!canvas) return;
+                try {
+                    const imgData = canvas.toDataURL('image/png', 1.0);
+                    const pos = posicoes[idx];
+                    doc.setFontSize(9);
+                    doc.setTextColor(80);
+                    doc.text(g.titulo, pos.x, pos.y - 2);
+                    doc.addImage(imgData, 'PNG', pos.x, pos.y, larguraImg, alturaImg);
+                } catch (err) {
+                    console.warn('Não foi possível capturar o gráfico:', g.id, err.message);
+                }
+            });
+
+            // ===== TABELA (numa nova página, para não sobrepor os gráficos) =====
+            doc.addPage();
+            doc.setFontSize(11);
+            doc.setTextColor(157, 33, 43);
+            doc.text('Tabela de Registos', 14, 15);
+
             const linhas = ultimoRelatorioFiltrado.map(r => {
                 const data = r.data;
                 const catLabel = data.categoria === 'publica' ? 'Pública' : (data.categoria === 'comunitaria' ? 'Comunitária' : '-');
@@ -986,7 +1028,7 @@
             });
 
             doc.autoTable({
-                startY: 38,
+                startY: 20,
                 head: [['Nome', 'Técnico', 'Província', 'Distrito', 'Categoria', 'Status', 'Progresso', 'Monitorias', 'Orçamento (MZN)']],
                 body: linhas,
                 styles: { fontSize: 8 },
