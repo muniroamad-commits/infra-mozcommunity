@@ -641,7 +641,10 @@
 
             const camadaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 attribution: '© Esri, Maxar, Earthstar Geographics',
-                maxZoom: 19
+                maxZoom: 19,
+                maxNativeZoom: 16 // em zonas rurais (como o norte de Moçambique) não há imagens de satélite
+                                  // acima deste nível de zoom; a partir daqui a última imagem disponível
+                                  // é simplesmente ampliada, em vez de mostrar "Map data not yet available"
             });
 
             const camadaRelevo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
@@ -652,7 +655,8 @@
             // Camada extra: rótulos (nomes de ruas/lugares) por cima do satélite
             const camadaRotulos = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
                 attribution: '',
-                maxZoom: 19
+                maxZoom: 19,
+                maxNativeZoom: 16
             });
 
             camadaRuas.addTo(leafletMap); // camada inicial por defeito
