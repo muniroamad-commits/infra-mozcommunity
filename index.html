@@ -15,10 +15,10 @@
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23185FA5' width='192' height='192'/><text x='50%' y='50%' font-size='100' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'>M</text></svg>">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script defer src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
 
     <style>
         * {
@@ -186,14 +186,6 @@
             box-shadow: 0 4px 8px rgba(24, 95, 165, 0.2);
         }
 
-        .btn-danger {
-            background: var(--danger);
-        }
-
-        .btn-danger:hover {
-            background: #c82333;
-        }
-
         .modal {
             display: none;
             position: fixed;
@@ -222,27 +214,9 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         }
 
-        .modal-header {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-header button {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #999;
-        }
-
         .success-message {
             background: #d4edda;
             border: 1px solid #c3e6cb;
-            border-left: 4px solid var(--success);
             color: #155724;
             padding: 1rem;
             border-radius: 4px;
@@ -257,7 +231,6 @@
         .error-message {
             background: #f8d7da;
             border: 1px solid #f5c6cb;
-            border-left: 4px solid var(--danger);
             color: #721c24;
             padding: 1rem;
             border-radius: 4px;
@@ -267,119 +240,6 @@
 
         .error-message.show {
             display: block;
-        }
-
-        .record-card {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .record-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            border-color: var(--primary);
-        }
-
-        .record-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 0.75rem;
-        }
-
-        .record-card-title {
-            font-weight: 600;
-            color: var(--dark);
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .status-planejado {
-            background: #e9ecef;
-            color: #495057;
-        }
-
-        .status-construcao {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .status-concluido {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .record-meta {
-            font-size: 12px;
-            color: #999;
-            margin-bottom: 0.5rem;
-        }
-
-        .visits-counter {
-            background: var(--light);
-            padding: 0.75rem;
-            border-radius: 4px;
-            font-size: 12px;
-            margin-top: 0.75rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .photo-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 0.75rem;
-            margin-top: 0.75rem;
-        }
-
-        .photo-item {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1;
-            border-radius: 6px;
-            overflow: hidden;
-            background: var(--light);
-        }
-
-        .photo-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .photo-item-date {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            font-size: 10px;
-            padding: 0.25rem;
-            text-align: center;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 2rem 1rem;
-            color: #999;
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 1rem;
-            opacity: 0.5;
         }
 
         .login-screen {
@@ -411,147 +271,28 @@
             margin-bottom: 1rem;
         }
 
-        .sync-indicator {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 12px;
-            padding: 0.5rem;
-            background: var(--light);
-            border-radius: 4px;
-            margin-bottom: 1rem;
-        }
-
-        .sync-indicator.syncing {
-            color: var(--warning);
-        }
-
-        .sync-indicator.synced {
-            color: var(--success);
-        }
-
-        .sync-indicator.error {
-            color: var(--danger);
-        }
-
-        .sync-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: currentColor;
-        }
-
-        .sync-dot.pulse {
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .photo-upload-area {
-            border: 2px dashed var(--primary);
-            border-radius: 8px;
-            padding: 2rem;
+        .empty-state {
             text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: rgba(24, 95, 165, 0.05);
-        }
-
-        .photo-upload-area:hover {
-            background: rgba(24, 95, 165, 0.1);
-            border-color: #0C447C;
-        }
-
-        .photo-upload-area i {
-            font-size: 32px;
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .visit-timeline {
-            position: relative;
-            padding-left: 30px;
-        }
-
-        .visit-item {
-            position: relative;
-            padding: 1rem;
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            margin-bottom: 1rem;
-        }
-
-        .visit-item::before {
-            content: '';
-            position: absolute;
-            left: -30px;
-            top: 1.5rem;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--primary);
-            border: 3px solid white;
-        }
-
-        .visit-item::after {
-            content: '';
-            position: absolute;
-            left: -24px;
-            top: 2rem;
-            width: 2px;
-            height: calc(100% + 1rem);
-            background: var(--border);
-        }
-
-        .visit-item:last-child::after {
-            display: none;
-        }
-
-        .visit-item-date {
-            font-size: 12px;
+            padding: 2rem 1rem;
             color: #999;
-            margin-bottom: 0.5rem;
-        }
-
-        .visit-item-status {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 0.5rem;
-            align-items: center;
-        }
-
-        .visit-item-progress {
-            font-size: 12px;
-            color: #666;
         }
 
         @media (max-width: 600px) {
             .header h1 {
                 font-size: 16px;
             }
-
             .modal-content {
                 width: 95%;
-                padding: 1rem;
-            }
-
-            .photo-grid {
-                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
             }
         }
     </style>
 </head>
 <body>
-    <!-- Tela de Login -->
     <div id="loginScreen" class="login-screen">
         <div class="login-box">
             <h2>
-                <i class="fas fa-map-pin" style="color: var(--primary);"></i>
-                <br>MozCommunity
+                <i class="fas fa-map-pin"></i>
+                <br>MozCommunity v5.0
             </h2>
             
             <div id="loginError" class="error-message"></div>
@@ -603,36 +344,22 @@
         </div>
     </div>
 
-    <!-- App Principal -->
     <div id="appScreen" class="app-container" style="display: none;">
-        <!-- Header -->
         <div class="header">
             <h1>
                 <i class="fas fa-map-pin"></i> MozCommunity v5.0
             </h1>
             <div class="header-actions">
-                <button class="btn-icon" title="Sincronizar" onclick="manualSync()">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
-                <button class="btn-icon" title="Utilizador" onclick="openUserMenu()">
+                <button class="btn-icon" title="Menu" onclick="openUserMenu()">
                     <i class="fas fa-user-circle"></i>
                 </button>
             </div>
         </div>
 
-        <!-- Conteúdo Principal -->
         <div class="main-content">
-            <!-- Indicador de Sincronização -->
-            <div id="syncIndicator" class="sync-indicator syncing" style="display: none;">
-                <div class="sync-dot pulse"></div>
-                <span id="syncText">Sincronizando...</span>
-            </div>
-
-            <!-- Mensagens -->
             <div id="successMessage" class="success-message"></div>
             <div id="errorMessage" class="error-message"></div>
 
-            <!-- Abas -->
             <div class="tabs">
                 <button class="tab-btn active" data-tab="novo" onclick="switchTab('novo')">
                     <i class="fas fa-plus-circle"></i> Novo Registo
@@ -642,69 +369,24 @@
                 </button>
             </div>
 
-            <!-- ABA 1: Novo Registo -->
             <div id="tab-novo" class="tab-content active">
-                <h2 style="margin-bottom: 1.5rem;">Novo Registo de Infraestrutura</h2>
-
+                <h2 style="margin-bottom: 1.5rem;">Novo Registo</h2>
                 <form id="infraForm">
                     <div class="form-group">
-                        <label for="nome">Nome da Infraestrutura *</label>
-                        <input type="text" id="nome" required placeholder="ex: Estrada Comunitária">
+                        <label for="nome">Nome *</label>
+                        <input type="text" id="nome" required placeholder="Nome da infraestrutura">
                     </div>
 
                     <div class="form-group">
                         <label for="tipo">Tipo *</label>
                         <select id="tipo" required>
-                            <option value="">Selecione tipo...</option>
-                            <option value="estrada">Estrada/Ponte</option>
-                            <option value="escuela">Escola</option>
-                            <option value="centro-saude">Centro de Saúde</option>
-                            <option value="agua">Água/Saneamento</option>
-                            <option value="energia">Energia/Eletricidade</option>
-                            <option value="mercado">Mercado</option>
+                            <option value="">Selecione...</option>
+                            <option value="estrada">Estrada</option>
+                            <option value="escola">Escola</option>
+                            <option value="saude">Centro Saúde</option>
+                            <option value="agua">Água</option>
                             <option value="outro">Outro</option>
                         </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="provincia">Província *</label>
-                        <select id="provincia" required onchange="updateDistritos()">
-                            <option value="">Selecione província...</option>
-                            <option value="Cabo Delgado">Cabo Delgado</option>
-                            <option value="Nampula">Nampula</option>
-                            <option value="Niassa">Niassa</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="distrito">Distrito *</label>
-                        <select id="distrito" required></select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="localidade">Localidade *</label>
-                        <input type="text" id="localidade" required placeholder="ex: Pemba">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Coordenadas GPS *</label>
-                        <button type="button" class="btn-primary" onclick="getCoordinatesGPS()" style="margin-bottom: 0.75rem;">
-                            <i class="fas fa-location-dot"></i> Obter Coordenadas
-                        </button>
-                        <div id="gpsStatus" style="display: none; background: #fff3cd; padding: 0.75rem; border-radius: 6px; margin-bottom: 0.75rem; font-size: 12px; border-left: 4px solid var(--warning);">
-                            <i class="fas fa-spinner fa-spin"></i> <span id="gpsStatusText">Procurando satélites...</span>
-                        </div>
-                    </div>
-
-                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="latitude">Latitude *</label>
-                            <input type="number" id="latitude" step="0.00001" required>
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="longitude">Longitude *</label>
-                            <input type="number" id="longitude" step="0.00001" required>
-                        </div>
                     </div>
 
                     <div class="form-group">
@@ -721,203 +403,103 @@
                         <input type="number" id="progress" min="0" max="100" required value="0">
                     </div>
 
-                    <div class="form-group">
-                        <label for="descricao">Descrição</label>
-                        <textarea id="descricao" rows="3" placeholder="Anotações adicionais..."></textarea>
-                    </div>
-
                     <button type="submit" class="btn-primary">
-                        <i class="fas fa-save"></i> Guardar Localmente
+                        <i class="fas fa-save"></i> Guardar
                     </button>
                 </form>
             </div>
 
-            <!-- ABA 2: Meus Registos -->
             <div id="tab-lista" class="tab-content">
-                <h2 style="margin-bottom: 1.5rem;">Meus Registos de Campo</h2>
-
-                <div id="recordsList"></div>
+                <h2 style="margin-bottom: 1.5rem;">Meus Registos</h2>
+                <div id="recordsList">
+                    <div class="empty-state">Nenhum registo</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Detalhe do Registo -->
-    <div id="detailModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="detailTitle"></h3>
-                <button onclick="closeDetailModal()"><i class="fas fa-times"></i></button>
-            </div>
-            <div id="detailContent"></div>
-        </div>
-    </div>
-
-    <!-- Modal Adicionar Visita -->
-    <div id="visitModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Nova Visita</h3>
-                <button onclick="closeVisitModal()"><i class="fas fa-times"></i></button>
-            </div>
-
-            <form id="visitForm">
-                <div class="form-group">
-                    <label for="visitStatus">Novo Status *</label>
-                    <select id="visitStatus" required>
-                        <option value="planejado">Planeado</option>
-                        <option value="construcao">Em Construção</option>
-                        <option value="concluido">Concluído</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="visitProgress">Progresso (%) *</label>
-                    <input type="number" id="visitProgress" min="0" max="100" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="visitObservacoes">Observações</label>
-                    <textarea id="visitObservacoes" rows="3" placeholder="Anotações desta visita..."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Fotos desta Visita</label>
-                    <div class="photo-upload-area" onclick="document.getElementById('photoInput').click()">
-                        <i class="fas fa-camera"></i>
-                        <p>Clique para tirar foto ou selecionar</p>
-                        <small>Múltiplas fotos permitidas</small>
-                    </div>
-                    <input type="file" id="photoInput" accept="image/*" multiple style="display: none;" onchange="handlePhotoSelect(event)">
-                </div>
-
-                <div id="photosPreview" class="photo-grid"></div>
-
-                <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn-primary" style="flex: 1; margin: 0;">
-                        <i class="fas fa-save"></i> Guardar Visita
-                    </button>
-                    <button type="button" onclick="closeVisitModal()" class="btn-primary" style="flex: 1; margin: 0; background: #999;">
-                        <i class="fas fa-times"></i> Cancelar
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal Menu Utilizador -->
     <div id="userModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                 <h3>Menu</h3>
-                <button onclick="closeUserModal()"><i class="fas fa-times"></i></button>
-            </div>
-
-            <div style="padding: 1rem 0;">
-                <div style="background: var(--light); padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
-                    <div style="font-weight: 600; margin-bottom: 0.25rem;" id="userNameDisplay"></div>
-                    <div style="font-size: 12px; color: #999;" id="userEmailDisplay"></div>
-                </div>
-
-                <button onclick="logout()" class="btn-primary btn-danger">
-                    <i class="fas fa-sign-out-alt"></i> Terminar Sessão
+                <button onclick="closeUserModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
+            <div style="background: var(--light); padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <div style="font-weight: 600; margin-bottom: 0.25rem;" id="userNameDisplay"></div>
+                <div style="font-size: 12px; color: #999;" id="userEmailDisplay"></div>
+            </div>
+            <button onclick="logout()" class="btn-primary" style="background: var(--danger);">
+                <i class="fas fa-sign-out-alt"></i> Terminar Sessão
+            </button>
         </div>
     </div>
 
     <script>
-        // ============ FIREBASE CONFIG ============
         const firebaseConfig = {
-            apiKey: "AIzaSyDemoKeyReplace_com_sua_chave",
-            projectId: "mozcommunity-platform",
-            storageBucket: "mozcommunity-platform.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef123456789"
+            apiKey: "AIzaSyDqUPcchO02QsCdawYAhn5rSB_JjrMZV94",
+            authDomain: "infra-mozcommunity.firebaseapp.com",
+            projectId: "infra-mozcommunity",
+            storageBucket: "infra-mozcommunity.firebasestorage.app",
+            messagingSenderId: "296393259981",
+            appId: "1:296393259981:web:d6cd641869cea1648662284"
         };
 
-        let db, auth, storage;
-        let currentUser = null;
-        let currentRecordId = null;
-        let selectedPhotos = [];
+        let db, auth, currentUser = null;
 
-        // Inicializar Firebase
-        async function initFirebase() {
-            try {
-                firebase.initializeApp(firebaseConfig);
-                db = firebase.firestore();
-                auth = firebase.auth();
-                storage = firebase.storage();
+        firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db = firebase.firestore();
 
-                // Ouvir mudanças de autenticação
-                auth.onAuthStateChanged((user) => {
-                    if (user) {
-                        currentUser = user;
-                        showApp();
-                        updateUserDisplay();
-                        loadRecords();
-                        setupAutoSync();
-                    } else {
-                        showLogin();
-                    }
-                });
-            } catch (error) {
-                showError('Erro ao inicializar Firebase: ' + error.message);
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                showApp();
+                updateUserDisplay();
+                loadRecords();
+            } else {
+                showLogin();
             }
-        }
+        });
 
-        // ============ AUTENTICAÇÃO ============
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            login();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            auth.signInWithEmailAndPassword(email, password).catch(err => {
+                showLoginError(err.message);
+            });
         });
 
         document.getElementById('registerForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            register();
-        });
-
-        async function login() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-            } catch (error) {
-                showLoginError('Erro: ' + error.message);
-            }
-        }
-
-        async function register() {
             const name = document.getElementById('registerName').value;
             const email = document.getElementById('registerEmail').value;
             const password = document.getElementById('registerPassword').value;
-
+            
             if (!name || !email || !password) {
                 showLoginError('Preencha todos os campos');
                 return;
             }
 
-            try {
-                const result = await auth.createUserWithEmailAndPassword(email, password);
-                await result.user.updateProfile({ displayName: name });
-            } catch (error) {
-                showLoginError('Erro: ' + error.message);
-            }
-        }
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(result => {
+                    result.user.updateProfile({ displayName: name });
+                })
+                .catch(err => {
+                    showLoginError(err.message);
+                });
+        });
 
-        function logout() {
-            auth.signOut();
-            closeUserModal();
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appScreen').style.display = 'flex';
         }
 
         function showLogin() {
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('appScreen').style.display = 'none';
-        }
-
-        function showApp() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appScreen').style.display = 'flex';
         }
 
         function showLoginError(msg) {
@@ -934,66 +516,36 @@
             }
         }
 
-        // ============ TABS ============
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-
             document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
             document.getElementById(`tab-${tab}`).classList.add('active');
-
-            if (tab === 'lista') {
-                loadRecords();
-            }
+            if (tab === 'lista') loadRecords();
         }
 
-        // ============ FORMULÁRIO ============
         document.getElementById('infraForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            await saveRecord();
-        });
-
-        async function saveRecord() {
             const record = {
                 nome: document.getElementById('nome').value,
                 tipo: document.getElementById('tipo').value,
-                provincia: document.getElementById('provincia').value,
-                distrito: document.getElementById('distrito').value,
-                localidade: document.getElementById('localidade').value,
-                latitude: parseFloat(document.getElementById('latitude').value),
-                longitude: parseFloat(document.getElementById('longitude').value),
                 status: document.getElementById('status').value,
                 progress: parseInt(document.getElementById('progress').value),
-                descricao: document.getElementById('descricao').value,
                 criado: new Date(),
-                usuario: currentUser.uid,
-                visitas: [
-                    {
-                        data: new Date(),
-                        status: document.getElementById('status').value,
-                        progress: parseInt(document.getElementById('progress').value),
-                        observacoes: document.getElementById('descricao').value,
-                        fotos: []
-                    }
-                ]
+                usuario: currentUser.uid
             };
 
             try {
-                showSyncStatus('Guardando...');
-                const docRef = await db.collection('users').doc(currentUser.uid)
+                await db.collection('users').doc(currentUser.uid)
                     .collection('infraestruturas').add(record);
-                
+                showSuccess('✅ Registo guardado!');
                 document.getElementById('infraForm').reset();
-                showSuccess('✅ Registo guardado com sucesso!');
                 switchTab('lista');
             } catch (error) {
-                showError('Erro ao guardar: ' + error.message);
-            } finally {
-                hideSyncStatus();
+                showError('Erro: ' + error.message);
             }
-        }
+        });
 
-        // ============ CARREGAR REGISTOS ============
         async function loadRecords() {
             try {
                 const snapshot = await db.collection('users').doc(currentUser.uid)
@@ -1003,263 +555,39 @@
                 recordsList.innerHTML = '';
 
                 if (snapshot.empty) {
-                    recordsList.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">
-                                <i class="fas fa-inbox"></i>
-                            </div>
-                            <p>Nenhum registo ainda</p>
-                            <small>Crie seu primeiro registo na aba "Novo Registo"</small>
-                        </div>
-                    `;
+                    recordsList.innerHTML = '<div class="empty-state">Nenhum registo</div>';
                     return;
                 }
 
                 snapshot.forEach((doc) => {
                     const data = doc.data();
-                    recordsList.appendChild(createRecordCard(doc.id, data));
+                    const div = document.createElement('div');
+                    div.style.cssText = 'background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;';
+                    div.innerHTML = `
+                        <div style="font-weight: 600;">${data.nome}</div>
+                        <div style="font-size: 12px; color: #999;">${data.tipo} • ${data.status}</div>
+                        <div style="margin-top: 0.5rem; font-size: 12px;">Progresso: ${data.progress}%</div>
+                    `;
+                    recordsList.appendChild(div);
                 });
             } catch (error) {
                 showError('Erro ao carregar: ' + error.message);
             }
         }
 
-        function createRecordCard(id, data) {
-            const div = document.createElement('div');
-            div.className = 'record-card';
-            div.onclick = () => showRecordDetail(id, data);
-
-            const statusClass = `status-${data.status}`;
-            const visitasCount = data.visitas ? data.visitas.length : 0;
-            const ultimaVisita = data.visitas && data.visitas.length > 0 
-                ? new Date(data.visitas[data.visitas.length - 1].data.toDate()).toLocaleDateString('pt-PT')
-                : 'N/A';
-
-            div.innerHTML = `
-                <div class="record-card-header">
-                    <div>
-                        <div class="record-card-title">${data.nome}</div>
-                        <div class="record-meta">${data.tipo} • ${data.localidade}</div>
-                    </div>
-                    <span class="status-badge ${statusClass}">${data.status}</span>
-                </div>
-
-                <div class="visits-counter">
-                    <span><i class="fas fa-camera"></i> ${data.fotos ? data.fotos.length : 0} foto(s)</span>
-                    <span><i class="fas fa-calendar"></i> ${ultimaVisita}</span>
-                </div>
-            `;
-
-            return div;
+        function openUserMenu() {
+            document.getElementById('userModal').classList.add('active');
         }
 
-        function showRecordDetail(id, data) {
-            currentRecordId = id;
-            document.getElementById('detailTitle').textContent = data.nome;
-
-            const visitasHTML = data.visitas ? data.visitas.map((visita, idx) => `
-                <div class="visit-item">
-                    <div class="visit-item-date">
-                        <i class="fas fa-calendar-alt"></i> 
-                        ${new Date(visita.data.toDate ? visita.data.toDate() : visita.data).toLocaleString('pt-PT')}
-                    </div>
-                    <div class="visit-item-status">
-                        <span class="status-badge status-${visita.status}">${visita.status}</span>
-                        <span class="visit-item-progress">${visita.progress}% concluído</span>
-                    </div>
-                    ${visita.observacoes ? `<div style="font-size: 12px; color: #666;">${visita.observacoes}</div>` : ''}
-                    ${visita.fotos && visita.fotos.length > 0 ? `
-                        <div class="photo-grid">
-                            ${visita.fotos.map(foto => `<div class="photo-item"><img src="${foto.url}" alt="Foto"><div class="photo-item-date">${foto.data}</div></div>`).join('')}
-                        </div>
-                    ` : ''}
-                </div>
-            `).join('') : '';
-
-            document.getElementById('detailContent').innerHTML = `
-                <div style="margin-bottom: 1rem;">
-                    <strong>Localização:</strong> ${data.localidade}, ${data.distrito}, ${data.provincia}<br>
-                    <strong>Coordenadas:</strong> ${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}<br>
-                    <strong>Status Atual:</strong> <span class="status-badge status-${data.status}">${data.status}</span><br>
-                    <strong>Progresso:</strong> ${data.progress}%
-                </div>
-
-                <h4 style="margin: 1.5rem 0 1rem 0;">Histórico de Visitas (${data.visitas ? data.visitas.length : 0})</h4>
-                <div class="visit-timeline">
-                    ${visitasHTML || '<p style="color: #999;">Sem visitas registadas</p>'}
-                </div>
-
-                <div style="border-top: 1px solid #e0e0e0; padding-top: 1rem; margin-top: 1.5rem; display: flex; gap: 1rem;">
-                    <button onclick="openVisitModal()" class="btn-primary" style="flex: 1; margin: 0;">
-                        <i class="fas fa-plus-circle"></i> Nova Visita
-                    </button>
-                    <button onclick="editRecord('${id}')" class="btn-primary" style="flex: 1; margin: 0; background: var(--secondary);">
-                        <i class="fas fa-edit"></i> Editar
-                    </button>
-                </div>
-            `;
-
-            document.getElementById('detailModal').classList.add('active');
+        function closeUserModal() {
+            document.getElementById('userModal').classList.remove('active');
         }
 
-        function closeDetailModal() {
-            document.getElementById('detailModal').classList.remove('active');
-            currentRecordId = null;
+        function logout() {
+            auth.signOut();
+            closeUserModal();
         }
 
-        function editRecord(id) {
-            // TODO: Implementar edição de registo
-            showSuccess('Funcionalidade em desenvolvimento');
-        }
-
-        // ============ MÚLTIPLAS VISITAS ============
-        function openVisitModal() {
-            if (!currentRecordId) {
-                showError('Selecione um registo primeiro');
-                return;
-            }
-            selectedPhotos = [];
-            document.getElementById('photosPreview').innerHTML = '';
-            document.getElementById('visitForm').reset();
-            document.getElementById('visitModal').classList.add('active');
-        }
-
-        function closeVisitModal() {
-            document.getElementById('visitModal').classList.remove('active');
-            selectedPhotos = [];
-        }
-
-        function handlePhotoSelect(event) {
-            const files = Array.from(event.target.files);
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    selectedPhotos.push({
-                        file: file,
-                        data: e.target.result,
-                        nome: file.name
-                    });
-                    updatePhotoPreview();
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        function updatePhotoPreview() {
-            const preview = document.getElementById('photosPreview');
-            preview.innerHTML = selectedPhotos.map((photo, idx) => `
-                <div class="photo-item">
-                    <img src="${photo.data}" alt="Preview">
-                    <button type="button" onclick="removePhoto(${idx})" style="position: absolute; top: 4px; right: 4px; background: var(--danger); color: white; border: none; width: 20px; height: 20px; border-radius: 50%; cursor: pointer;">
-                        <i class="fas fa-times" style="font-size: 10px;"></i>
-                    </button>
-                </div>
-            `).join('');
-        }
-
-        function removePhoto(idx) {
-            selectedPhotos.splice(idx, 1);
-            updatePhotoPreview();
-        }
-
-        document.getElementById('visitForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await addVisit();
-        });
-
-        async function addVisit() {
-            if (!currentRecordId) return;
-
-            try {
-                showSyncStatus('Guardando visita...');
-
-                const docRef = db.collection('users').doc(currentUser.uid)
-                    .collection('infraestruturas').doc(currentRecordId);
-
-                const visita = {
-                    data: new Date(),
-                    status: document.getElementById('visitStatus').value,
-                    progress: parseInt(document.getElementById('visitProgress').value),
-                    observacoes: document.getElementById('visitObservacoes').value,
-                    fotos: []
-                };
-
-                // Upload fotos
-                for (let photo of selectedPhotos) {
-                    const storageRef = storage.ref(`fotos/${currentUser.uid}/${currentRecordId}/${Date.now()}_${photo.nome}`);
-                    const uploadTask = await storageRef.putString(photo.data, 'data_url');
-                    const url = await uploadTask.ref.getDownloadURL();
-                    visita.fotos.push({
-                        url: url,
-                        data: new Date().toLocaleDateString('pt-PT')
-                    });
-                }
-
-                // Atualizar documento
-                await docRef.update({
-                    visitas: firebase.firestore.FieldValue.arrayUnion(visita),
-                    status: visita.status,
-                    progress: visita.progress
-                });
-
-                showSuccess('✅ Visita guardada com sucesso!');
-                closeVisitModal();
-                loadRecords();
-            } catch (error) {
-                showError('Erro ao guardar visita: ' + error.message);
-            } finally {
-                hideSyncStatus();
-            }
-        }
-
-        // ============ GPS ============
-        function getCoordinatesGPS() {
-            if (!navigator.geolocation) {
-                showError('Geolocalização não suportada');
-                return;
-            }
-
-            document.getElementById('gpsStatus').style.display = 'block';
-
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
-                    document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
-                    document.getElementById('gpsStatus').style.display = 'none';
-                    showSuccess('✅ Coordenadas obtidas!');
-                },
-                (error) => {
-                    showError('Erro: ' + error.message);
-                    document.getElementById('gpsStatus').style.display = 'none';
-                }
-            );
-        }
-
-        // ============ SINCRONIZAÇÃO ============
-        function showSyncStatus(text) {
-            const indicator = document.getElementById('syncIndicator');
-            document.getElementById('syncText').textContent = text;
-            indicator.className = 'sync-indicator syncing';
-            indicator.style.display = 'flex';
-        }
-
-        function hideSyncStatus() {
-            document.getElementById('syncIndicator').style.display = 'none';
-        }
-
-        async function manualSync() {
-            showSyncStatus('Sincronizando...');
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            hideSyncStatus();
-            showSuccess('✅ Sincronizado com sucesso!');
-            loadRecords();
-        }
-
-        function setupAutoSync() {
-            setInterval(manualSync, 300000); // A cada 5 minutos
-        }
-
-        // ============ MENSAGENS ============
         function showSuccess(msg) {
             const el = document.getElementById('successMessage');
             el.textContent = msg;
@@ -1274,39 +602,9 @@
             setTimeout(() => el.classList.remove('show'), 5000);
         }
 
-        // ============ INTERFACE ============
-        function updateDistritos() {
-            const provincia = document.getElementById('provincia').value;
-            const distritos = {
-                'Cabo Delgado': ['Pemba', 'Muatua', 'Metangula', 'Ibo', 'Palma', 'Mocimboa da Praia', 'Quissanga', 'Balama', 'Chiúre', 'Macomia', 'Muidumbe'],
-                'Nampula': ['Nampula', 'Angoche', 'Inhambane', 'Jalasi', 'Malema', 'Monapo', 'Mongicoe', 'Murrupula', 'Nacala', 'Nacaroa'],
-                'Niassa': ['Lichinga', 'Cuamba', 'Majune', 'Mandimba', 'Marrupa', 'Metarica', 'Muembe', 'Nipepe', 'Sanga']
-            };
-
-            const select = document.getElementById('distrito');
-            select.innerHTML = '<option value="">Selecione distrito...</option>';
-            if (distritos[provincia]) {
-                distritos[provincia].forEach(d => {
-                    select.innerHTML += `<option value="${d}">${d}</option>`;
-                });
-            }
-        }
-
-        function openUserMenu() {
-            document.getElementById('userModal').classList.add('active');
-        }
-
-        function closeUserModal() {
-            document.getElementById('userModal').classList.remove('active');
-        }
-
-        // PWA
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(() => {});
         }
-
-        // Iniciar
-        initFirebase();
     </script>
 </body>
 </html>
