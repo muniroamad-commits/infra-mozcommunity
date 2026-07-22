@@ -138,6 +138,8 @@
             <div>
                 <h1>MozCommunity v6.0</h1>
                 <div class="header-info" id="userInfo"></div>
+                <div class="header-info" id="onlineStatus" style="font-weight: 600; margin-top: 2px;">🟢 Online</div>
+                <div class="header-info" id="pendingBadge" style="display: none; margin-top: 2px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 8px; width: fit-content;"></div>
             </div>
             <button class="btn-logout" onclick="logout()">Sair</button>
         </div>
@@ -322,11 +324,117 @@
         const db = firebase.firestore();
         const storage = firebase.storage();
 
+        // ===== OFFLINE: ATIVAR PERSISTÊNCIA DO FIRESTORE =====
+        db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
+            console.warn('Persistência offline indisponível:', err.code);
+        });
+
         let currentUser = null;
         let isSupervisor = false;
         let selectedRecordId = null;
         let newPhotos = [];
         let visitPhotos = [];
+        let isOnline = navigator.onLine;
+
+        // ===== OFFLINE: FILA DE FOTOS PENDENTES (localStorage) =====
+        const PENDING_KEY = 'mozcommunity_pending_photos';
+
+        function getPendingPhotos() {
+            try { return JSON.parse(localStorage.getItem(PENDING_KEY) || '[]'); }
+            catch { return []; }
+        }
+
+        function savePendingPhotos(list) {
+            localStorage.setItem(PENDING_KEY, JSON.stringify(list));
+            updatePendingBadge();
+        }
+
+        function queuePhoto(userId, recordId, visitIndex, photo) {
+            const pending = getPendingPhotos();
+            pending.push({
+                id: Date.now() + '_' + Math.random().toString(36).slice(2),
+                userId, recordId, visitIndex,
+                name: photo.name,
+                data: photo.data,
+                criado: new Date().toISOString()
+            });
+            savePendingPhotos(pending);
+        }
+
+        async function syncPendingPhotos() {
+            const pending = getPendingPhotos();
+            if (pending.length === 0) return;
+            showSuccess(`🔄 A sincronizar ${pending.length} foto(s) pendente(s)...`);
+
+            const stillPending = [];
+            for (const item of pending) {
+                try {
+                    const storageRef = storage.ref(`fotos/${item.userId}/${item.recordId}/${Date.now()}_${item.name}`);
+                    await storageRef.putString(item.data, 'data_url');
+                    const url = await storageRef.getDownloadURL();
+                    const fotoObj = { url, data: new Date().toLocaleDateString('pt-PT') };
+
+                    const docRef = db.collection('users').doc(item.userId)
+                        .collection('infraestruturas').doc(item.recordId);
+
+                    if (item.visitIndex === null) {
+                        await docRef.update({ fotos: firebase.firestore.FieldValue.arrayUnion(fotoObj) });
+                    } else {
+                        // item.visitIndex aqui é na verdade o visitId único da visita
+                        const snap = await docRef.get();
+                        const data = snap.data();
+                        if (data && data.visitas) {
+                            const visita = data.visitas.find(v => v.visitId === item.visitIndex);
+                            if (visita) {
+                                visita.fotos = visita.fotos || [];
+                                visita.fotos.push(fotoObj);
+                                await docRef.update({ visitas: data.visitas });
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Falha ao sincronizar foto:', error.message);
+                    stillPending.push(item);
+                }
+            }
+
+            savePendingPhotos(stillPending);
+            if (stillPending.length === 0) {
+                showSuccess('✅ Todas as fotos foram sincronizadas!');
+            } else {
+                showError(`⚠️ ${stillPending.length} foto(s) continuam pendentes (sem rede).`);
+            }
+            if (document.getElementById('tab-lista') && document.getElementById('tab-lista').classList.contains('active')) loadRecords();
+        }
+
+        function updatePendingBadge() {
+            const count = getPendingPhotos().length;
+            const badge = document.getElementById('pendingBadge');
+            if (!badge) return;
+            if (count > 0) {
+                badge.textContent = `📸 ${count} foto(s) por enviar`;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // ===== OFFLINE: INDICADOR DE ESTADO DE REDE =====
+        function updateOnlineStatus() {
+            isOnline = navigator.onLine;
+            const el = document.getElementById('onlineStatus');
+            if (!el) return;
+            if (isOnline) {
+                el.textContent = '🟢 Online';
+                el.style.color = '#28a745';
+                syncPendingPhotos();
+            } else {
+                el.textContent = '🔴 Offline (dados guardados no telemóvel)';
+                el.style.color = '#ffc107';
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
 
 // DADOS OFICIAIS DE DIVISÕES ADMINISTRATIVAS (INE Moçambique)
         const divisoes = {
@@ -459,23 +567,32 @@
             };
 
             try {
-                showSuccess('Guardando...');
+                showSuccess(navigator.onLine ? 'Guardando...' : '📴 Sem rede — a guardar localmente, sincroniza automaticamente!');
+
+                // Firestore trata sozinho de guardar offline e sincronizar depois
                 const docRef = await db.collection('users').doc(currentUser.uid)
                     .collection('infraestruturas').add(record);
 
-                // Upload fotos
+                // Fotos: tenta enviar já; se falhar (offline), entra na fila local
+                let enviadas = 0, falhadas = 0;
                 for (let photo of newPhotos) {
-                    const storageRef = storage.ref(`fotos/${currentUser.uid}/${docRef.id}/${Date.now()}_${photo.name}`);
-                    await storageRef.putString(photo.data, 'data_url');
-                    const url = await storageRef.getDownloadURL();
-                    record.fotos.push({ url, data: new Date().toLocaleDateString('pt-PT') });
+                    try {
+                        const storageRef = storage.ref(`fotos/${currentUser.uid}/${docRef.id}/${Date.now()}_${photo.name}`);
+                        await storageRef.putString(photo.data, 'data_url');
+                        const url = await storageRef.getDownloadURL();
+                        await docRef.update({ fotos: firebase.firestore.FieldValue.arrayUnion({ url, data: new Date().toLocaleDateString('pt-PT') }) });
+                        enviadas++;
+                    } catch (photoErr) {
+                        queuePhoto(currentUser.uid, docRef.id, null, photo);
+                        falhadas++;
+                    }
                 }
 
-                if (newPhotos.length > 0) {
-                    await docRef.update({ fotos: record.fotos });
+                if (falhadas > 0) {
+                    showSuccess(`✅ Registo guardado! 📸 ${falhadas} foto(s) na fila (sem rede) — serão enviadas automaticamente.`);
+                } else {
+                    showSuccess('✅ Registo guardado!');
                 }
-
-                showSuccess('✅ Registo guardado!');
                 document.getElementById('formRegisto').reset();
                 newPhotos = [];
                 document.getElementById('photoPreview').innerHTML = '';
@@ -490,7 +607,9 @@
             e.preventDefault();
             if (!selectedRecordId) return;
 
+            const visitId = Date.now() + '_' + Math.random().toString(36).slice(2);
             const visit = {
+                visitId,
                 data: new Date(),
                 status: document.getElementById('visitStatus').value,
                 progress: parseInt(document.getElementById('visitProgress').value),
@@ -499,12 +618,18 @@
             };
 
             try {
-                // Upload fotos visita
+                // Fotos que conseguirem enviar já vão diretas; as outras entram na fila
+                let falhadas = 0;
                 for (let photo of visitPhotos) {
-                    const storageRef = storage.ref(`fotos/${currentUser.uid}/${selectedRecordId}/${Date.now()}_${photo.name}`);
-                    await storageRef.putString(photo.data, 'data_url');
-                    const url = await storageRef.getDownloadURL();
-                    visit.fotos.push({ url, data: new Date().toLocaleDateString('pt-PT') });
+                    try {
+                        const storageRef = storage.ref(`fotos/${currentUser.uid}/${selectedRecordId}/${Date.now()}_${photo.name}`);
+                        await storageRef.putString(photo.data, 'data_url');
+                        const url = await storageRef.getDownloadURL();
+                        visit.fotos.push({ url, data: new Date().toLocaleDateString('pt-PT') });
+                    } catch (photoErr) {
+                        queuePhoto(currentUser.uid, selectedRecordId, visitId, photo);
+                        falhadas++;
+                    }
                 }
 
                 await db.collection('users').doc(currentUser.uid)
@@ -515,7 +640,7 @@
                         progress: visit.progress
                     });
 
-                showSuccess('✅ Visita guardada!');
+                showSuccess(falhadas > 0 ? `✅ Visita guardada! 📸 ${falhadas} foto(s) na fila (sem rede).` : '✅ Visita guardada!');
                 closeModal('visitModal');
                 document.getElementById('visitForm').reset();
                 visitPhotos = [];
@@ -713,6 +838,8 @@
                 document.getElementById('userInfo').textContent = currentUser.displayName;
                 loadRecords();
             }
+            updateOnlineStatus();
+            updatePendingBadge();
         }
 
         // GPS
