@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MozCommunity v5.0 COMPLETO</title>
+    <title>MozCommunity v6.0 - Cascata</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
@@ -19,9 +19,9 @@
         .login-box { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); width: 100%; max-width: 400px; }
         .login-box h1 { text-align: center; color: #185FA5; margin-bottom: 30px; }
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
-        .form-group input:focus { outline: none; border-color: #185FA5; box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.1); }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 13px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; font-family: inherit; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #185FA5; box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.1); }
         .btn { width: 100%; padding: 12px; background: #185FA5; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 10px; }
         .btn:hover { background: #0C447C; }
         .btn-danger { background: #dc3545; }
@@ -30,55 +30,54 @@
         .btn-secondary:hover { background: #5a6268; }
         .btn-success { background: #28a745; }
         .btn-success:hover { background: #218838; }
-        .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 6px; margin-bottom: 15px; display: none; }
+        .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 6px; margin-bottom: 15px; display: none; font-size: 13px; }
         .error.show { display: block; }
-        .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 6px; margin-bottom: 15px; display: none; }
+        .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 6px; margin-bottom: 15px; display: none; font-size: 13px; }
         .success.show { display: block; }
         
         /* APP */
         .app-container { display: none; flex-direction: column; height: 100vh; background: white; }
         .app-container.show { display: flex; }
-        .header { background: linear-gradient(135deg, #185FA5 0%, #0C447C 100%); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-        .header h1 { font-size: 18px; flex: 1; }
-        .header-info { font-size: 12px; }
-        .btn-logout { background: #dc3545; padding: 8px 12px; color: white; border: none; border-radius: 6px; cursor: pointer; }
+        .header { background: linear-gradient(135deg, #185FA5 0%, #0C447C 100%); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 16px; }
+        .header-info { font-size: 11px; }
+        .btn-logout { background: #dc3545; padding: 8px 12px; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
         .main-content { flex: 1; padding: 15px; overflow-y: auto; }
-        .tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid #ddd; flex-wrap: wrap; }
-        .tab-btn { padding: 10px 15px; background: none; border: none; cursor: pointer; font-weight: 500; color: #999; border-bottom: 3px solid transparent; font-size: 12px; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 2px solid #ddd; flex-wrap: wrap; }
+        .tab-btn { padding: 8px 12px; background: none; border: none; cursor: pointer; font-weight: 500; color: #999; border-bottom: 3px solid transparent; font-size: 11px; }
         .tab-btn.active { color: #185FA5; border-bottom-color: #185FA5; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .record-card { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ddd; cursor: pointer; }
+        .record-card { background: #f9f9f9; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ddd; cursor: pointer; }
         .record-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .record-card h3 { color: #185FA5; margin-bottom: 5px; font-size: 14px; }
-        .record-card p { font-size: 12px; color: #666; margin: 3px 0; }
-        .empty-state { text-align: center; color: #999; padding: 40px; }
+        .record-card h3 { color: #185FA5; margin-bottom: 5px; font-size: 13px; }
+        .record-card p { font-size: 11px; color: #666; margin: 2px 0; }
+        .empty-state { text-align: center; color: #999; padding: 40px; font-size: 13px; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
         .modal.show { display: flex; }
-        .modal-content { background: white; border-radius: 8px; padding: 20px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal-content { background: white; border-radius: 8px; padding: 20px; max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
-        .modal-header h2 { font-size: 16px; }
+        .modal-header h2 { font-size: 15px; }
         .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
-        .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin: 10px 0; }
+        .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; margin: 8px 0; }
         .photo-item { position: relative; aspect-ratio: 1; border-radius: 6px; overflow: hidden; background: #f0f0f0; }
         .photo-item img { width: 100%; height: 100%; object-fit: cover; }
-        .photo-item-remove { position: absolute; top: 0; right: 0; background: #dc3545; color: white; border: none; width: 24px; height: 24px; cursor: pointer; font-size: 12px; }
-        .visit-timeline { border-left: 3px solid #185FA5; padding-left: 15px; }
-        .visit-item { margin-bottom: 20px; padding: 10px; background: #f9f9f9; border-radius: 6px; }
-        .visit-item-date { font-size: 12px; color: #999; margin-bottom: 5px; }
-        .visit-item-status { font-size: 12px; margin-bottom: 5px; }
-        .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .photo-item-remove { position: absolute; top: 0; right: 0; background: #dc3545; color: white; border: none; width: 20px; height: 20px; cursor: pointer; font-size: 10px; }
+        .visit-timeline { border-left: 3px solid #185FA5; padding-left: 12px; }
+        .visit-item { margin-bottom: 15px; padding: 8px; background: #f9f9f9; border-radius: 6px; }
+        .visit-item-date { font-size: 11px; color: #999; margin-bottom: 3px; }
+        .visit-item-status { font-size: 11px; margin-bottom: 3px; }
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: 600; }
         .badge-planejado { background: #e9ecef; color: #495057; }
         .badge-construcao { background: #fff3cd; color: #856404; }
         .badge-concluido { background: #d4edda; color: #155724; }
-        .input-group { display: flex; gap: 5px; }
-        .input-group input { flex: 1; }
-        .input-group button { width: auto; padding: 10px 15px; }
+        textarea { resize: vertical; }
         @media (max-width: 600px) {
             .header { padding: 10px; }
             .header h1 { font-size: 14px; }
-            .tabs { font-size: 12px; }
-            .tab-btn { padding: 8px 10px; }
+            .tabs { font-size: 10px; }
+            .tab-btn { padding: 6px 10px; }
+            .form-group label { font-size: 12px; }
         }
     </style>
 </head>
@@ -86,12 +85,12 @@
     <!-- LOGIN SCREEN -->
     <div id="loginScreen" class="login-container">
         <div class="login-box">
-            <h1>MozCommunity v5.0 COMPLETO</h1>
+            <h1>MozCommunity v6.0</h1>
             <div id="error" class="error"></div>
             <div id="success" class="success"></div>
             
             <div id="loginFormDiv">
-                <h2 style="text-align: center; font-size: 16px; color: #666; margin-bottom: 20px;">Fazer Login</h2>
+                <h2 style="text-align: center; font-size: 14px; color: #666; margin-bottom: 20px;">Fazer Login</h2>
                 <form id="formLogin">
                     <div class="form-group">
                         <label>Email</label>
@@ -107,7 +106,7 @@
             </div>
 
             <div id="registerFormDiv" style="display: none;">
-                <h2 style="text-align: center; font-size: 16px; color: #666; margin-bottom: 20px;">Criar Conta</h2>
+                <h2 style="text-align: center; font-size: 14px; color: #666; margin-bottom: 20px;">Criar Conta</h2>
                 <form id="formRegister">
                     <div class="form-group">
                         <label>Nome Completo</label>
@@ -137,7 +136,7 @@
     <div id="appScreen" class="app-container">
         <div class="header">
             <div>
-                <h1>MozCommunity v5.0</h1>
+                <h1>MozCommunity v6.0</h1>
                 <div class="header-info" id="userInfo"></div>
             </div>
             <button class="btn-logout" onclick="logout()">Sair</button>
@@ -152,7 +151,7 @@
 
             <!-- TAB: NOVO REGISTO -->
             <div id="tab-novo" class="tab-content active">
-                <h2 style="margin-bottom: 15px;">Novo Registo</h2>
+                <h2 style="margin-bottom: 12px; font-size: 15px;">Novo Registo</h2>
                 <form id="formRegisto">
                     <div class="form-group">
                         <label>Nome *</label>
@@ -169,22 +168,51 @@
                             <option value="outro">Outro</option>
                         </select>
                     </div>
+
+                    <!-- CASCATA: Província → Distrito → Posto Admin -->
                     <div class="form-group">
                         <label>Província *</label>
-                        <select id="provincia" required>
-                            <option value="">Selecione...</option>
+                        <select id="provincia" required onchange="updateDistritos()">
+                            <option value="">Selecione Província...</option>
                             <option value="Cabo Delgado">Cabo Delgado</option>
                             <option value="Nampula">Nampula</option>
                             <option value="Niassa">Niassa</option>
                         </select>
                     </div>
+
+                    <div class="form-group">
+                        <label>Distrito *</label>
+                        <select id="distrito" required onchange="updatePostosAdmin()">
+                            <option value="">Selecione Distrito...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Posto Administrativo *</label>
+                        <select id="postoAdmin" required>
+                            <option value="">Selecione Posto...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Localidade *</label>
+                        <input type="text" id="localidade" required placeholder="Nome da localidade">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Aldeia *</label>
+                        <input type="text" id="aldeia" required placeholder="Nome da aldeia">
+                    </div>
+
+                    <!-- GPS -->
                     <div class="form-group">
                         <label>GPS *</label>
-                        <div class="input-group">
+                        <div style="display: flex; gap: 5px;">
                             <input type="text" id="gpsStatus" placeholder="Clique para capturar" readonly>
-                            <button type="button" class="btn btn-success" style="width: auto;" onclick="captureGPS()">📍 GPS</button>
+                            <button type="button" class="btn btn-success" style="width: auto; padding: 10px 12px;" onclick="captureGPS()">📍</button>
                         </div>
                     </div>
+
                     <div class="form-group">
                         <label>Latitude *</label>
                         <input type="number" id="latitude" step="0.00001" required placeholder="-13.238">
@@ -193,6 +221,7 @@
                         <label>Longitude *</label>
                         <input type="number" id="longitude" step="0.00001" required placeholder="40.351">
                     </div>
+
                     <div class="form-group">
                         <label>Status *</label>
                         <select id="status" required>
@@ -201,28 +230,31 @@
                             <option value="concluido">Concluído</option>
                         </select>
                     </div>
+
                     <div class="form-group">
                         <label>Progresso (%) *</label>
                         <input type="number" id="progress" min="0" max="100" required value="0">
                     </div>
+
                     <div class="form-group">
-                        <label>Tirar Foto</label>
-                        <input type="file" id="photoInput" accept="image/*" onchange="addPhotoPreview(event)">
+                        <label>Fotos</label>
+                        <input type="file" id="photoInput" accept="image/*" multiple onchange="addPhotoPreview(event)">
                         <div id="photoPreview" class="photo-grid"></div>
                     </div>
+
                     <button type="submit" class="btn">Guardar Registo</button>
                 </form>
             </div>
 
             <!-- TAB: MEUS REGISTOS -->
             <div id="tab-lista" class="tab-content">
-                <h2 style="margin-bottom: 15px;">Meus Registos</h2>
+                <h2 style="margin-bottom: 12px; font-size: 15px;">Meus Registos</h2>
                 <div id="recordsList"></div>
             </div>
 
             <!-- TAB: SUPERVISOR -->
             <div id="tab-supervisor" class="tab-content">
-                <h2 style="margin-bottom: 15px;">Todos os Registos</h2>
+                <h2 style="margin-bottom: 12px; font-size: 15px;">Todos os Registos</h2>
                 <div id="supervisorList"></div>
             </div>
         </div>
@@ -232,7 +264,7 @@
     <div id="detailModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="detailTitle"></h2>
+                <h2 id="detailTitle" style="font-size: 15px;"></h2>
                 <button class="close-btn" onclick="closeModal('detailModal')">&times;</button>
             </div>
             <div id="detailContent"></div>
@@ -243,7 +275,7 @@
     <div id="visitModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Nova Visita</h2>
+                <h2 style="font-size: 15px;">Nova Visita</h2>
                 <button class="close-btn" onclick="closeModal('visitModal')">&times;</button>
             </div>
             <form id="visitForm">
@@ -265,7 +297,7 @@
                 </div>
                 <div class="form-group">
                     <label>Tirar Foto</label>
-                    <input type="file" id="visitPhotoInput" accept="image/*" onchange="addVisitPhotoPreview(event)">
+                    <input type="file" id="visitPhotoInput" accept="image/*" multiple onchange="addVisitPhotoPreview(event)">
                     <div id="visitPhotoPreview" class="photo-grid"></div>
                 </div>
                 <button type="submit" class="btn btn-success">Guardar Visita</button>
@@ -295,6 +327,46 @@
         let selectedRecordId = null;
         let newPhotos = [];
         let visitPhotos = [];
+
+        // DADOS DE DIVISÕES ADMINISTRATIVAS
+        const divisoes = {
+            "Cabo Delgado": {
+                "Pemba": ["Pemba Urbana", "Pemba Rural"],
+                "Muatua": ["Muatua"],
+                "Metangula": ["Metangula"],
+                "Ibo": ["Ibo"],
+                "Palma": ["Palma"],
+                "Mocimboa da Praia": ["Mocimboa da Praia"],
+                "Quissanga": ["Quissanga"],
+                "Balama": ["Balama"],
+                "Chiúre": ["Chiúre"],
+                "Macomia": ["Macomia"],
+                "Muidumbe": ["Muidumbe"]
+            },
+            "Nampula": {
+                "Nampula": ["Nampula Urbana", "Nampula Rural"],
+                "Angoche": ["Angoche Urbana", "Angoche Rural"],
+                "Inhambane": ["Inhambane"],
+                "Jalasi": ["Jalasi"],
+                "Malema": ["Malema"],
+                "Monapo": ["Monapo"],
+                "Mongicoe": ["Mongicoe"],
+                "Murrupula": ["Murrupula"],
+                "Nacala": ["Nacala Urbana", "Nacala Rural"],
+                "Nacaroa": ["Nacaroa"]
+            },
+            "Niassa": {
+                "Lichinga": ["Lichinga Urbana", "Lichinga Rural"],
+                "Cuamba": ["Cuamba"],
+                "Majune": ["Majune"],
+                "Mandimba": ["Mandimba"],
+                "Marrupa": ["Marrupa"],
+                "Metarica": ["Metarica"],
+                "Muembe": ["Muembe"],
+                "Nipepe": ["Nipepe"],
+                "Sanga": ["Sanga"]
+            }
+        };
 
         // AUTH LISTENER
         auth.onAuthStateChanged(user => {
@@ -348,6 +420,10 @@
                 nome: document.getElementById('nome').value,
                 tipo: document.getElementById('tipo').value,
                 provincia: document.getElementById('provincia').value,
+                distrito: document.getElementById('distrito').value,
+                postoAdmin: document.getElementById('postoAdmin').value,
+                localidade: document.getElementById('localidade').value,
+                aldeia: document.getElementById('aldeia').value,
                 latitude: parseFloat(document.getElementById('latitude').value),
                 longitude: parseFloat(document.getElementById('longitude').value),
                 status: document.getElementById('status').value,
@@ -426,6 +502,43 @@
             }
         });
 
+        // CASCATA: Actualizar Distritos
+        function updateDistritos() {
+            const provincia = document.getElementById('provincia').value;
+            const distritoSelect = document.getElementById('distrito');
+            const postoSelect = document.getElementById('postoAdmin');
+            
+            distritoSelect.innerHTML = '<option value="">Selecione Distrito...</option>';
+            postoSelect.innerHTML = '<option value="">Selecione Posto...</option>';
+
+            if (provincia && divisoes[provincia]) {
+                Object.keys(divisoes[provincia]).forEach(distrito => {
+                    const option = document.createElement('option');
+                    option.value = distrito;
+                    option.textContent = distrito;
+                    distritoSelect.appendChild(option);
+                });
+            }
+        }
+
+        // CASCATA: Actualizar Postos Administrativos
+        function updatePostosAdmin() {
+            const provincia = document.getElementById('provincia').value;
+            const distrito = document.getElementById('distrito').value;
+            const postoSelect = document.getElementById('postoAdmin');
+            
+            postoSelect.innerHTML = '<option value="">Selecione Posto...</option>';
+
+            if (provincia && distrito && divisoes[provincia] && divisoes[provincia][distrito]) {
+                divisoes[provincia][distrito].forEach(posto => {
+                    const option = document.createElement('option');
+                    option.value = posto;
+                    option.textContent = posto;
+                    postoSelect.appendChild(option);
+                });
+            }
+        }
+
         // CARREGAR REGISTOS
         async function loadRecords() {
             try {
@@ -444,9 +557,9 @@
                     div.onclick = () => showDetail(doc.id, data);
                     div.innerHTML = `
                         <h3>${data.nome}</h3>
-                        <p><i class="fas fa-map-marker"></i> ${data.provincia}</p>
+                        <p><i class="fas fa-map-marker"></i> ${data.distrito}, ${data.aldeia}</p>
                         <p><span class="badge badge-${data.status}">${data.status}</span> ${data.progress}%</p>
-                        <p style="font-size: 11px; color: #999;">📸 ${data.fotos ? data.fotos.length : 0} foto(s) • ${data.visitas ? data.visitas.length + 1 : 1} visita(s)</p>
+                        <p style="font-size: 10px; color: #999;">📸 ${data.fotos ? data.fotos.length : 0} foto(s) • ${data.visitas ? data.visitas.length + 1 : 1} visita(s)</p>
                     `;
                     list.appendChild(div);
                 });
@@ -455,7 +568,7 @@
             }
         }
 
-        // SUPERVISOR: Ver Todos os Registos
+        // SUPERVISOR: Ver Todos
         async function loadSupervisorData() {
             if (!isSupervisor) return;
             try {
@@ -473,11 +586,11 @@
                         const data = doc.data();
                         const div = document.createElement('div');
                         div.className = 'record-card';
-                        div.onclick = () => showSupervisorDetail(doc.id, data, userDoc.id);
+                        div.onclick = () => showDetail(doc.id, data);
                         div.innerHTML = `
                             <h3>${data.nome}</h3>
                             <p><strong>Técnico:</strong> ${userDoc.data().name}</p>
-                            <p><i class="fas fa-map-marker"></i> ${data.provincia}</p>
+                            <p><i class="fas fa-map-marker"></i> ${data.distrito}, ${data.aldeia}</p>
                             <p><span class="badge badge-${data.status}">${data.status}</span> ${data.progress}%</p>
                         `;
                         list.appendChild(div);
@@ -495,7 +608,7 @@
 
             let visitsHTML = '';
             if (data.visitas && data.visitas.length > 0) {
-                visitsHTML = '<h4 style="margin-top: 20px; margin-bottom: 10px;">Visitas</h4><div class="visit-timeline">';
+                visitsHTML = '<h4 style="margin-top: 15px; margin-bottom: 10px; font-size: 13px;">Visitas</h4><div class="visit-timeline">';
                 data.visitas.forEach((visit, idx) => {
                     const visitDate = visit.data.toDate ? visit.data.toDate() : new Date(visit.data);
                     visitsHTML += `
@@ -504,9 +617,9 @@
                             <div class="visit-item-status">
                                 <span class="badge badge-${visit.status}">${visit.status}</span> ${visit.progress}%
                             </div>
-                            ${visit.observacoes ? `<p style="font-size: 12px; margin-top: 5px;">${visit.observacoes}</p>` : ''}
+                            ${visit.observacoes ? `<p style="font-size: 11px; margin-top: 3px;">${visit.observacoes}</p>` : ''}
                             ${visit.fotos && visit.fotos.length > 0 ? `
-                                <div class="photo-grid" style="margin-top: 10px;">
+                                <div class="photo-grid" style="margin-top: 8px;">
                                     ${visit.fotos.map(f => `<div class="photo-item"><img src="${f.url}" alt="Foto" onclick="event.stopPropagation()"></div>`).join('')}
                                 </div>
                             ` : ''}
@@ -517,17 +630,19 @@
             }
 
             document.getElementById('detailContent').innerHTML = `
-                <div style="margin-bottom: 15px;">
+                <div style="margin-bottom: 12px; font-size: 12px;">
                     <p><strong>Tipo:</strong> ${data.tipo}</p>
-                    <p><strong>Província:</strong> ${data.provincia}</p>
+                    <p><strong>Localização:</strong> ${data.localidade}, ${data.aldeia}</p>
+                    <p><strong>Distrito:</strong> ${data.distrito}</p>
+                    <p><strong>Posto Admin:</strong> ${data.postoAdmin}</p>
                     <p><strong>GPS:</strong> ${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}</p>
                     <p><strong>Status:</strong> <span class="badge badge-${data.status}">${data.status}</span></p>
                     <p><strong>Progresso:</strong> ${data.progress}%</p>
                 </div>
 
                 ${data.fotos && data.fotos.length > 0 ? `
-                    <div>
-                        <h4 style="margin-bottom: 10px;">Fotos Iniciais</h4>
+                    <div style="margin-bottom: 12px;">
+                        <h4 style="margin-bottom: 8px; font-size: 12px;">Fotos Iniciais</h4>
                         <div class="photo-grid">
                             ${data.fotos.map(f => `<div class="photo-item"><img src="${f.url}" alt="Foto" onclick="event.stopPropagation()"></div>`).join('')}
                         </div>
@@ -536,15 +651,15 @@
 
                 ${visitsHTML}
 
-                <div style="margin-top: 20px; display: flex; gap: 10px;">
-                    <button type="button" class="btn btn-success" style="flex: 1;" onclick="openVisitModal()">➕ Nova Visita</button>
-                    <button type="button" class="btn btn-danger" style="flex: 1;" onclick="deleteRecord('${id}')">🗑️ Eliminar</button>
+                <div style="margin-top: 15px; display: flex; gap: 8px;">
+                    <button type="button" class="btn btn-success" style="flex: 1; padding: 10px;" onclick="openVisitModal()">➕ Nova Visita</button>
+                    <button type="button" class="btn btn-danger" style="flex: 1; padding: 10px;" onclick="deleteRecord('${id}')">🗑️ Eliminar</button>
                 </div>
             `;
             openModal('detailModal');
         }
 
-        // DELETAR REGISTO
+        // DELETAR
         async function deleteRecord(id) {
             if (!confirm('Tem a certeza que deseja eliminar este registo?')) return;
             try {
@@ -558,7 +673,7 @@
             }
         }
 
-        // VERIFICAR SE É SUPERVISOR
+        // VERIFICAR SUPERVISOR
         async function checkIfSupervisor() {
             try {
                 const userDoc = await db.collection('users').doc(currentUser.uid).get();
@@ -570,7 +685,6 @@
                 document.getElementById('userInfo').textContent = `${currentUser.displayName} ${isSupervisor ? '(Supervisor)' : ''}`;
                 loadRecords();
             } catch (error) {
-                console.log('Erro ao verificar supervisor:', error);
                 showAppScreen();
                 document.getElementById('userInfo').textContent = currentUser.displayName;
                 loadRecords();
@@ -702,31 +816,6 @@
             el.textContent = msg;
             el.classList.add('show');
             setTimeout(() => el.classList.remove('show'), 3000);
-        }
-
-        // SUPERVISOR DETAIL
-        function showSupervisorDetail(id, data, userId) {
-            selectedRecordId = id;
-            document.getElementById('detailTitle').textContent = data.nome;
-
-            let visitsHTML = '<h4 style="margin-top: 15px;">Histórico</h4><div class="visit-timeline">';
-            visitsHTML += `<div class="visit-item"><div class="visit-item-date">Criado - ${new Date(data.criado.toDate ? data.criado.toDate() : data.criado).toLocaleString('pt-PT')}</div></div>`;
-            if (data.visitas) {
-                data.visitas.forEach((visit, idx) => {
-                    const visitDate = visit.data.toDate ? visit.data.toDate() : new Date(visit.data);
-                    visitsHTML += `<div class="visit-item"><div class="visit-item-date">Visita ${idx + 2} - ${visitDate.toLocaleString('pt-PT')}</div><div class="visit-item-status"><span class="badge badge-${visit.status}">${visit.status}</span> ${visit.progress}%</div></div>`;
-                });
-            }
-            visitsHTML += '</div>';
-
-            document.getElementById('detailContent').innerHTML = `
-                <p><strong>Técnico:</strong> ${data.tecnician || 'N/A'}</p>
-                <p><strong>Tipo:</strong> ${data.tipo}</p>
-                <p><strong>Status Atual:</strong> <span class="badge badge-${data.status}">${data.status}</span></p>
-                <p><strong>Progresso:</strong> ${data.progress}%</p>
-                ${visitsHTML}
-            `;
-            openModal('detailModal');
         }
 
         // PWA
