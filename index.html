@@ -327,6 +327,10 @@
                     <input type="number" id="visitProgress" min="0" max="100" required>
                 </div>
                 <div class="form-group">
+                    <label>Orçamento Gasto (MZN)</label>
+                    <input type="number" id="visitOrcamento" min="0" step="0.01" placeholder="Ex: 15000">
+                </div>
+                <div class="form-group">
                     <label>Observações</label>
                     <textarea id="visitObservacoes" rows="3" placeholder="Anotações desta visita..."></textarea>
                 </div>
@@ -361,6 +365,18 @@
                         <option value="construcao">Em Construção</option>
                         <option value="concluido">Concluído</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label>Novo Progresso (%) *</label>
+                    <input type="number" id="monitoriaProgress" min="0" max="100" required>
+                </div>
+                <div class="form-group">
+                    <label>Orçamento Gasto (MZN)</label>
+                    <input type="number" id="monitoriaOrcamento" min="0" step="0.01" placeholder="Ex: 15000">
+                </div>
+                <div class="form-group">
+                    <label>Observações</label>
+                    <textarea id="monitoriaObservacoes" rows="3" placeholder="Anotações desta monitoria..."></textarea>
                 </div>
                 <div class="form-group">
                     <label>Fotos</label>
@@ -692,11 +708,13 @@
             if (!selectedRecordId) return;
 
             const visitId = Date.now() + '_' + Math.random().toString(36).slice(2);
+            const orcamentoVal = document.getElementById('visitOrcamento').value;
             const visit = {
                 visitId,
                 data: new Date(),
                 status: document.getElementById('visitStatus').value,
                 progress: parseInt(document.getElementById('visitProgress').value),
+                orcamentoGasto: orcamentoVal ? parseFloat(orcamentoVal) : null,
                 observacoes: document.getElementById('visitObservacoes').value,
                 fotos: []
             };
@@ -735,22 +753,24 @@
             }
         });
 
-        // MONITORIA RÁPIDA (só status + fotos, mantém o progresso atual, fica no mesmo histórico)
+        // MONITORIA RÁPIDA (status, progresso, orçamento gasto, fotos e observações — fica no mesmo histórico)
         document.getElementById('monitoriaForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!selectedRecordId) return;
 
             const visitId = Date.now() + '_' + Math.random().toString(36).slice(2);
             const novoStatus = document.getElementById('monitoriaStatus').value;
-            const progressoAtual = selectedRecordData ? (selectedRecordData.progress || 0) : 0;
+            const novoProgress = parseInt(document.getElementById('monitoriaProgress').value) || 0;
+            const orcamentoVal = document.getElementById('monitoriaOrcamento').value;
 
             const visit = {
                 visitId,
                 tipo: 'monitoria', // marca este registo do histórico como vindo da Monitoria rápida
                 data: new Date(),
                 status: novoStatus,
-                progress: progressoAtual,
-                observacoes: '',
+                progress: novoProgress,
+                orcamentoGasto: orcamentoVal ? parseFloat(orcamentoVal) : null,
+                observacoes: document.getElementById('monitoriaObservacoes').value,
                 fotos: []
             };
 
@@ -772,7 +792,8 @@
                     .collection('infraestruturas').doc(selectedRecordId)
                     .update({
                         visitas: firebase.firestore.FieldValue.arrayUnion(visit),
-                        status: novoStatus
+                        status: novoStatus,
+                        progress: novoProgress
                     });
 
                 showSuccess(falhadas > 0 ? `✅ Monitoria guardada! 📸 ${falhadas} foto(s) na fila (sem rede).` : '✅ Monitoria guardada!');
@@ -986,6 +1007,7 @@
                             <div class="visit-item-date">${rotulo} ${idx + 2} - ${visitDate.toLocaleString('pt-PT')}</div>
                             <div class="visit-item-status">
                                 <span class="badge badge-${visit.status}">${visit.status}</span> ${visit.progress}%
+                                ${(visit.orcamentoGasto !== undefined && visit.orcamentoGasto !== null) ? ` • 💰 ${visit.orcamentoGasto.toLocaleString('pt-PT')} MZN` : ''}
                             </div>
                             ${visit.observacoes ? `<p style="font-size: 11px; margin-top: 3px;">${visit.observacoes}</p>` : ''}
                             ${visit.fotos && visit.fotos.length > 0 ? `
@@ -1196,9 +1218,10 @@
             monitoriaPhotos = [];
             document.getElementById('monitoriaPhotoPreview').innerHTML = '';
             document.getElementById('monitoriaForm').reset();
-            // Pré-selecionar o status atual do registo
+            // Pré-preencher status e progresso atuais do registo
             if (selectedRecordData) {
                 document.getElementById('monitoriaStatus').value = selectedRecordData.status || 'planejado';
+                document.getElementById('monitoriaProgress').value = selectedRecordData.progress || 0;
             }
             openModal('monitoriaModal');
         }

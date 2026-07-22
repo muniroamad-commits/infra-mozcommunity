@@ -218,6 +218,18 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <label>Novo Progresso (%) *</label>
+                    <input type="number" id="monitoriaProgress" min="0" max="100" required>
+                </div>
+                <div class="form-group">
+                    <label>Orçamento Gasto (MZN)</label>
+                    <input type="number" id="monitoriaOrcamento" min="0" step="0.01" placeholder="Ex: 15000">
+                </div>
+                <div class="form-group">
+                    <label>Observações</label>
+                    <textarea id="monitoriaObservacoes" rows="3" placeholder="Anotações desta monitoria..."></textarea>
+                </div>
+                <div class="form-group">
                     <label>Fotos</label>
                     <div style="display: flex; gap: 8px;">
                         <button type="button" class="btn" style="background:#6c757d; flex:1;" onclick="document.getElementById('monitoriaPhotoInputFile').click()">📁 Escolher Ficheiro</button>
@@ -610,7 +622,9 @@
                     visitsHTML += `
                         <div class="visit-item">
                             <div class="visit-item-date">${rotulo} ${idx + 2} — ${vDate.toLocaleString('pt-PT')}</div>
-                            <div><span class="badge badge-${v.status}">${v.status}</span> ${v.progress}%</div>
+                            <div><span class="badge badge-${v.status}">${v.status}</span> ${v.progress}%
+                                ${(v.orcamentoGasto !== undefined && v.orcamentoGasto !== null) ? ` • 💰 ${v.orcamentoGasto.toLocaleString('pt-PT')} MZN` : ''}
+                            </div>
                             ${v.observacoes ? `<p style="font-size:12px; margin-top:4px;">${v.observacoes}</p>` : ''}
                             ${v.fotos && v.fotos.length ? `<div class="photo-grid">${v.fotos.map(f => `<div class="photo-item"><img src="${f.url}"></div>`).join('')}</div>` : ''}
                         </div>`;
@@ -711,6 +725,7 @@
             document.getElementById('monitoriaPhotoPreview').innerHTML = '';
             document.getElementById('monitoriaForm').reset();
             document.getElementById('monitoriaStatus').value = selectedRecord.data.status || 'planejado';
+            document.getElementById('monitoriaProgress').value = selectedRecord.data.progress || 0;
             document.getElementById('monitoriaModal').classList.add('show');
         }
 
@@ -746,15 +761,17 @@
 
             const visitId = Date.now() + '_' + Math.random().toString(36).slice(2);
             const novoStatus = document.getElementById('monitoriaStatus').value;
-            const progressoAtual = selectedRecord.data.progress || 0;
+            const novoProgress = parseInt(document.getElementById('monitoriaProgress').value) || 0;
+            const orcamentoVal = document.getElementById('monitoriaOrcamento').value;
 
             const visit = {
                 visitId,
                 tipo: 'monitoria',
                 data: new Date(),
                 status: novoStatus,
-                progress: progressoAtual,
-                observacoes: '',
+                progress: novoProgress,
+                orcamentoGasto: orcamentoVal ? parseFloat(orcamentoVal) : null,
+                observacoes: document.getElementById('monitoriaObservacoes').value,
                 fotos: []
             };
 
@@ -770,7 +787,8 @@
                     .collection('infraestruturas').doc(selectedRecord.id)
                     .update({
                         visitas: firebase.firestore.FieldValue.arrayUnion(visit),
-                        status: novoStatus
+                        status: novoStatus,
+                        progress: novoProgress
                     });
 
                 closeMonitoriaModal();

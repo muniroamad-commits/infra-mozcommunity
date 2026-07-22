@@ -1,5 +1,5 @@
-// MozCommunity Service Worker v8 - Cache do "app shell" para funcionar offline
-const CACHE_NAME = 'mozcommunity-v8';
+// MozCommunity Service Worker v9 - Rede primeiro (sempre atualizado), cache como reserva offline
+const CACHE_NAME = 'mozcommunity-v9';
 const urlsToCache = [
   './',
   './index.html',
@@ -21,7 +21,7 @@ self.addEventListener('install', (event) => {
       );
     })
   );
-  self.skipWaiting();
+  self.skipWaiting(); // ativa a nova versão imediatamente, sem esperar que todos os separadores fechem
 });
 
 self.addEventListener('activate', (event) => {
@@ -30,14 +30,15 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames
           .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
+          .map((name) => caches.delete(name)) // limpa versões antigas do cache
       );
     })
   );
-  self.clients.claim();
+  self.clients.claim(); // toma controlo imediato de todas as páginas abertas
 });
 
 self.addEventListener('fetch', (event) => {
+  // Nunca intercetar pedidos ao Firebase (Auth, Firestore, Storage) — deixar sempre ir direto à rede
   if (event.request.url.includes('firestore.googleapis.com') ||
       event.request.url.includes('firebasestorage.googleapis.com') ||
       event.request.url.includes('identitytoolkit.googleapis.com') ||
@@ -45,9 +46,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // ESTRATÉGIA: REDE PRIMEIRO
+  // Tenta sempre buscar a versão mais recente da internet.
+  // Só usa o que está guardado no telemóvel (cache) se não houver rede.
+  // Isto garante que, assim que há internet, a app mostra sempre a versão
+  // mais recente que foi publicada — nunca fica presa numa versão antiga.
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request).then((networkResponse) => {
+    fetch(event.request)
+      .then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
           const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -55,13 +61,15 @@ self.addEventListener('fetch', (event) => {
           });
         }
         return networkResponse;
-      }).catch(() => {
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-      });
-
-      return cachedResponse || fetchPromise;
-    })
+      })
+      .catch(() => {
+        // Sem rede: usa o que estiver guardado
+        return caches.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) return cachedResponse;
+          if (event.request.mode === 'navigate') {
+            return caches.match('./index.html');
+          }
+        });
+      })
   );
 });
