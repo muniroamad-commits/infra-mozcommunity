@@ -69,8 +69,10 @@
         .visit-item-status { font-size: 11px; margin-bottom: 3px; }
         .badge { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: 600; }
         .badge-planejado { background: #e9ecef; color: #495057; }
+        .badge-mobilizacao { background: #cfe2ff; color: #084298; }
         .badge-construcao { background: #fff3cd; color: #856404; }
         .badge-concluido { background: #d4edda; color: #155724; }
+        .badge-entregue { background: #198754; color: #ffffff; }
         .badge-publica { background: #e2e3ff; color: #3f3fb0; }
         .badge-comunitaria { background: #ffe8d1; color: #a3590a; }
         textarea { resize: vertical; }
@@ -232,9 +234,11 @@
                     <div class="form-group">
                         <label>Status *</label>
                         <select id="status" required>
-                            <option value="planejado">Planeado</option>
+                            <option value="planejado">Planeada</option>
+                            <option value="mobilizacao">Em Mobilização</option>
                             <option value="construcao">Em Construção</option>
-                            <option value="concluido">Concluído</option>
+                            <option value="concluido">Concluída</option>
+                            <option value="entregue">Entregue</option>
                         </select>
                     </div>
 
@@ -279,9 +283,11 @@
                     </select>
                     <select id="filterStatus" onchange="renderAdminList()" style="flex: 1; min-width: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px;">
                         <option value="">Todos Status</option>
-                        <option value="planejado">Planeado</option>
+                        <option value="planejado">Planeada</option>
+                        <option value="mobilizacao">Em Mobilização</option>
                         <option value="construcao">Em Construção</option>
-                        <option value="concluido">Concluído</option>
+                        <option value="concluido">Concluída</option>
+                        <option value="entregue">Entregue</option>
                     </select>
                     <select id="filterCategoria" onchange="renderAdminList()" style="flex: 1; min-width: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px;">
                         <option value="">Todas Categorias</option>
@@ -327,9 +333,11 @@
                 <div class="form-group">
                     <label>Novo Status *</label>
                     <select id="monitoriaStatus" required>
-                        <option value="planejado">Planeado</option>
+                        <option value="planejado">Planeada</option>
+                        <option value="mobilizacao">Em Mobilização</option>
                         <option value="construcao">Em Construção</option>
-                        <option value="concluido">Concluído</option>
+                        <option value="concluido">Concluída</option>
+                        <option value="entregue">Entregue</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -784,6 +792,19 @@
             return '';
         }
 
+        // Traduz o valor interno do status para o rótulo correto em português
+        // (o valor interno "planejado"/"concluido" mantém-se para não quebrar registos já guardados)
+        function statusLabel(status) {
+            const rotulos = {
+                planejado: 'Planeada',
+                mobilizacao: 'Em Mobilização',
+                construcao: 'Em Construção',
+                concluido: 'Concluída',
+                entregue: 'Entregue'
+            };
+            return rotulos[status] || status;
+        }
+
         async function loadRecords() {
             try {
                 const snapshot = await db.collection('users').doc(currentUser.uid)
@@ -802,7 +823,7 @@
                     div.innerHTML = `
                         <h3>${data.nome}</h3>
                         <p><i class="fas fa-map-marker"></i> ${data.distrito}, ${data.aldeia}</p>
-                        <p>${categoriaBadge(data.categoria)} <span class="badge badge-${data.status}">${data.status}</span> ${data.progress}%</p>
+                        <p>${categoriaBadge(data.categoria)} <span class="badge badge-${data.status}">${statusLabel(data.status)}</span> ${data.progress}%</p>
                         <p style="font-size: 10px; color: #999;">📸 ${data.fotos ? data.fotos.length : 0} foto(s) • ${data.visitas ? data.visitas.length + 1 : 1} visita(s)</p>
                     `;
                     list.appendChild(div);
@@ -916,7 +937,7 @@
                     <h3>${data.nome}</h3>
                     <p><strong>Técnico:</strong> ${r.tecnico}</p>
                     <p><i class="fas fa-map-marker"></i> ${data.provincia || ''} • ${data.distrito || ''}, ${data.aldeia || ''}</p>
-                    <p>${categoriaBadge(data.categoria)} <span class="badge badge-${data.status}">${data.status}</span> ${data.progress}% • 📋 ${numVisitas} monitoria(s)</p>
+                    <p>${categoriaBadge(data.categoria)} <span class="badge badge-${data.status}">${statusLabel(data.status)}</span> ${data.progress}% • 📋 ${numVisitas} monitoria(s)</p>
                 `;
                 list.appendChild(div);
             });
@@ -939,7 +960,7 @@
                         <div class="visit-item">
                             <div class="visit-item-date">${rotulo} ${idx + 2} - ${visitDate.toLocaleString('pt-PT')}</div>
                             <div class="visit-item-status">
-                                <span class="badge badge-${visit.status}">${visit.status}</span> ${visit.progress}%
+                                <span class="badge badge-${visit.status}">${statusLabel(visit.status)}</span> ${visit.progress}%
                                 ${(visit.orcamentoGasto !== undefined && visit.orcamentoGasto !== null) ? ` • 💰 ${visit.orcamentoGasto.toLocaleString('pt-PT')} MZN` : ''}
                             </div>
                             ${visit.observacoes ? `<p style="font-size: 11px; margin-top: 3px;">${visit.observacoes}</p>` : ''}
@@ -962,7 +983,7 @@
                     <p><strong>Distrito:</strong> ${data.distrito}</p>
                     <p><strong>Posto Admin:</strong> ${data.postoAdmin}</p>
                     <p><strong>GPS:</strong> ${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}</p>
-                    <p><strong>Status:</strong> <span class="badge badge-${data.status}">${data.status}</span></p>
+                    <p><strong>Status:</strong> <span class="badge badge-${data.status}">${statusLabel(data.status)}</span></p>
                     <p><strong>Progresso:</strong> ${data.progress}%</p>
                 </div>
 

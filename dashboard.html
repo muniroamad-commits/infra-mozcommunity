@@ -77,8 +77,10 @@
         .record-card p { font-size: 12px; color: #666; margin: 3px 0; }
         .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
         .badge-planejado { background: #e9ecef; color: #495057; }
+        .badge-mobilizacao { background: #cfe2ff; color: #084298; }
         .badge-construcao { background: #fff3cd; color: #856404; }
         .badge-concluido { background: #d4edda; color: #155724; }
+        .badge-entregue { background: #198754; color: #ffffff; }
         .empty-state { text-align: center; color: #999; padding: 60px 20px; }
 
         /* MODAL */
@@ -161,9 +163,11 @@
                 </select>
                 <select id="filterStatus" onchange="renderList()">
                     <option value="">Todos Status</option>
-                    <option value="planejado">Planeado</option>
+                    <option value="planejado">Planeada</option>
+                    <option value="mobilizacao">Em Mobilização</option>
                     <option value="construcao">Em Construção</option>
-                    <option value="concluido">Concluído</option>
+                    <option value="concluido">Concluída</option>
+                    <option value="entregue">Entregue</option>
                 </select>
                 <select id="filterCategoria" onchange="renderList()">
                     <option value="">Todas Categorias</option>
@@ -199,9 +203,11 @@
                 </select>
                 <select id="relStatus" onchange="renderRelatorio()">
                     <option value="">Todos Status</option>
-                    <option value="planejado">Planeado</option>
+                    <option value="planejado">Planeada</option>
+                    <option value="mobilizacao">Em Mobilização</option>
                     <option value="construcao">Em Construção</option>
-                    <option value="concluido">Concluído</option>
+                    <option value="concluido">Concluída</option>
+                    <option value="entregue">Entregue</option>
                 </select>
                 <select id="relCategoria" onchange="renderRelatorio()">
                     <option value="">Todas Categorias</option>
@@ -503,6 +509,18 @@
             return '';
         }
 
+        // Traduz o valor interno do status para o rótulo correto em português
+        function statusLabel(status) {
+            const rotulos = {
+                planejado: 'Planeada',
+                mobilizacao: 'Em Mobilização',
+                construcao: 'Em Construção',
+                concluido: 'Concluída',
+                entregue: 'Entregue'
+            };
+            return rotulos[status] || status;
+        }
+
         let ultimosFiltrados = [];
 
         function renderList() {
@@ -521,16 +539,20 @@
             // Estatísticas (sobre o total)
             const totalConstrucao = todos.filter(r => r.data.status === 'construcao').length;
             const totalConcluido = todos.filter(r => r.data.status === 'concluido').length;
+            const totalEntregue = todos.filter(r => r.data.status === 'entregue').length;
             const totalPlaneado = todos.filter(r => r.data.status === 'planejado').length;
+            const totalMobilizacao = todos.filter(r => r.data.status === 'mobilizacao').length;
             const totalPublica = todos.filter(r => r.data.categoria === 'publica').length;
             const totalComunitaria = todos.filter(r => r.data.categoria === 'comunitaria').length;
             const totalVisitas = todos.reduce((s, r) => s + (r.data.visitas ? r.data.visitas.length : 0), 0);
 
             statsBar.innerHTML = `
                 <div class="stat-card"><div class="num">${todos.length}</div><div class="label">Registos</div></div>
-                <div class="stat-card"><div class="num">${totalPlaneado}</div><div class="label">Planeados</div></div>
+                <div class="stat-card"><div class="num">${totalPlaneado}</div><div class="label">Planeadas</div></div>
+                <div class="stat-card"><div class="num">${totalMobilizacao}</div><div class="label">Em Mobilização</div></div>
                 <div class="stat-card"><div class="num">${totalConstrucao}</div><div class="label">Em Construção</div></div>
-                <div class="stat-card"><div class="num">${totalConcluido}</div><div class="label">Concluídos</div></div>
+                <div class="stat-card"><div class="num">${totalConcluido}</div><div class="label">Concluídas</div></div>
+                <div class="stat-card"><div class="num">${totalEntregue}</div><div class="label">Entregues</div></div>
                 <div class="stat-card"><div class="num">${totalPublica}</div><div class="label">🏛️ Públicas</div></div>
                 <div class="stat-card"><div class="num">${totalComunitaria}</div><div class="label">🤝 Comunitárias</div></div>
                 <div class="stat-card"><div class="num">${totalVisitas}</div><div class="label">Monitorias</div></div>
@@ -566,7 +588,7 @@
                         <h3>${data.nome || 'Sem nome'}</h3>
                         <p><i class="fas fa-user"></i> ${r.tecnico}</p>
                         <p><i class="fas fa-map-marker-alt"></i> ${data.provincia || ''} • ${data.distrito || ''}, ${data.aldeia || ''}</p>
-                        <p>${categoriaBadge(data.categoria)} <span class="badge badge-${data.status}">${data.status}</span> &nbsp; ${data.progress || 0}% &nbsp; 📋 ${numVisitas} monitoria(s)</p>
+                        <p>${categoriaBadge(data.categoria)} <span class="badge badge-${data.status}">${statusLabel(data.status)}</span> &nbsp; ${data.progress || 0}% &nbsp; 📋 ${numVisitas} monitoria(s)</p>
                     `;
                     grid.appendChild(div);
                 });
@@ -672,7 +694,7 @@
                     <div style="font-size:13px; min-width:180px;">
                         <strong>${data.nome || 'Sem nome'}</strong><br>
                         ${catLabel}<br>
-                        <span style="text-transform:capitalize;">${data.status}</span> • ${data.progress || 0}%<br>
+                        <span>${statusLabel(data.status)}</span> • ${data.progress || 0}%<br>
                         <small>${data.distrito || ''}, ${data.aldeia || ''}</small><br>
                         <small>Técnico: ${r.tecnico}</small>
                     </div>
@@ -790,7 +812,7 @@
                     <td style="padding:8px;">${data.provincia || '-'}</td>
                     <td style="padding:8px;">${data.distrito || '-'}</td>
                     <td style="padding:8px;">${catLabel}</td>
-                    <td style="padding:8px;"><span class="badge badge-${data.status}">${data.status}</span></td>
+                    <td style="padding:8px;"><span class="badge badge-${data.status}">${statusLabel(data.status)}</span></td>
                     <td style="padding:8px;">${data.progress || 0}%</td>
                     <td style="padding:8px;">${numMonitorias}</td>
                     <td style="padding:8px;">${r.orcamentoTotal.toLocaleString('pt-PT')}</td>
@@ -819,7 +841,7 @@
             const porGrupoQuantidade = {};
             const porTipo = {};
             const porCategoria = { publica: 0, comunitaria: 0 };
-            const porStatus = { planejado: 0, construcao: 0, concluido: 0 };
+            const porStatus = { planejado: 0, mobilizacao: 0, construcao: 0, concluido: 0, entregue: 0 };
 
             filtrados.forEach(r => {
                 const data = r.data;
@@ -917,15 +939,15 @@
                 }
             });
 
-            // 5. Por Status (Planeado / Em Construção / Concluído)
+            // 5. Por Status (Planeada / Em Mobilização / Em Construção / Concluída / Entregue)
             chartInstances.status = new Chart(document.getElementById('chartStatus'), {
                 type: 'bar',
                 data: {
-                    labels: ['Planeado', 'Em Construção', 'Concluído'],
+                    labels: ['Planeada', 'Em Mobilização', 'Em Construção', 'Concluída', 'Entregue'],
                     datasets: [{
                         label: 'Nº de Infraestruturas por Status',
-                        data: [porStatus.planejado, porStatus.construcao, porStatus.concluido],
-                        backgroundColor: ['#adb5bd', '#FAA842', '#28a745']
+                        data: [porStatus.planejado, porStatus.mobilizacao, porStatus.construcao, porStatus.concluido, porStatus.entregue],
+                        backgroundColor: ['#adb5bd', '#0d6efd', '#FAA842', '#20c997', '#198754']
                     }]
                 },
                 options: {
@@ -971,7 +993,8 @@
 
                 // Resumo de filtros aplicados
                 const fProv = document.getElementById('relProvincia').value || 'Todas';
-                const fStatus = document.getElementById('relStatus').value || 'Todos';
+                const fStatusRaw = document.getElementById('relStatus').value;
+                const fStatus = fStatusRaw ? statusLabel(fStatusRaw) : 'Todos';
                 const fCategoria = document.getElementById('relCategoria').value || 'Todas';
                 doc.text(`Filtros: Província: ${fProv} | Status: ${fStatus} | Categoria: ${fCategoria}`, 14, 46);
 
@@ -1032,7 +1055,7 @@
                         data.provincia || '-',
                         data.distrito || '-',
                         catLabel,
-                        data.status,
+                        statusLabel(data.status),
                         `${data.progress || 0}%`,
                         (data.visitas ? data.visitas.length : 0).toString(),
                         r.orcamentoTotal.toLocaleString('pt-PT')
@@ -1074,7 +1097,7 @@
                     visitsHTML += `
                         <div class="visit-item">
                             <div class="visit-item-date">${rotulo} ${idx + 2} — ${vDate.toLocaleString('pt-PT')}</div>
-                            <div><span class="badge badge-${v.status}">${v.status}</span> ${v.progress}%
+                            <div><span class="badge badge-${v.status}">${statusLabel(v.status)}</span> ${v.progress}%
                                 ${(v.orcamentoGasto !== undefined && v.orcamentoGasto !== null) ? ` • 💰 ${v.orcamentoGasto.toLocaleString('pt-PT')} MZN` : ''}
                             </div>
                             ${v.observacoes ? `<p style="font-size:12px; margin-top:4px;">${v.observacoes}</p>` : ''}
@@ -1092,7 +1115,7 @@
                 <div class="detail-row"><strong>Distrito:</strong> ${data.distrito || '-'}</div>
                 <div class="detail-row"><strong>Posto Administrativo:</strong> ${data.postoAdmin || '-'}</div>
                 <div class="detail-row"><strong>GPS:</strong> ${data.latitude ? data.latitude.toFixed(5) : '-'}, ${data.longitude ? data.longitude.toFixed(5) : '-'}</div>
-                <div class="detail-row"><strong>Status atual:</strong> <span class="badge badge-${data.status}">${data.status}</span></div>
+                <div class="detail-row"><strong>Status atual:</strong> <span class="badge badge-${data.status}">${statusLabel(data.status)}</span></div>
                 <div class="detail-row"><strong>Progresso:</strong> ${data.progress || 0}%</div>
                 ${data.fotos && data.fotos.length ? `
                     <h4 style="margin-top:14px; margin-bottom:8px; font-size:13px;">Fotos Iniciais</h4>
@@ -1118,9 +1141,11 @@
                 <div class="form-group">
                     <label>Status</label>
                     <select id="editStatus">
-                        <option value="planejado" ${data.status === 'planejado' ? 'selected' : ''}>Planeado</option>
+                        <option value="planejado" ${data.status === 'planejado' ? 'selected' : ''}>Planeada</option>
+                        <option value="mobilizacao" ${data.status === 'mobilizacao' ? 'selected' : ''}>Em Mobilização</option>
                         <option value="construcao" ${data.status === 'construcao' ? 'selected' : ''}>Em Construção</option>
-                        <option value="concluido" ${data.status === 'concluido' ? 'selected' : ''}>Concluído</option>
+                        <option value="concluido" ${data.status === 'concluido' ? 'selected' : ''}>Concluída</option>
+                        <option value="entregue" ${data.status === 'entregue' ? 'selected' : ''}>Entregue</option>
                     </select>
                 </div>
                 <div class="form-group">
