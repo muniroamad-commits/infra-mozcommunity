@@ -1212,9 +1212,33 @@
             setTimeout(() => el.classList.remove('show'), 3000);
         }
 
-        // PWA
+        // ===== PWA: ATUALIZAÇÃO AUTOMÁTICA =====
+        // Sempre que publica uma nova versão (novo commit + push), a app deteta
+        // sozinha da próxima vez que for aberta e recarrega automaticamente com
+        // o conteúdo mais recente — sem precisar de desinstalar/reinstalar,
+        // nem de limpar manualmente a cache do navegador.
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(() => {});
+            navigator.serviceWorker.register('sw.js').then((registration) => {
+                // Verificar imediatamente se há uma versão mais recente do sw.js no servidor
+                registration.update();
+
+                // Verificar também sempre que a app volta a ficar visível
+                // (ex: ao reabrir pelo ícone depois de estar em segundo plano)
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        registration.update();
+                    }
+                });
+            }).catch(() => {});
+
+            // Quando uma nova versão assume o controlo da página, recarregar
+            // automaticamente uma única vez para mostrar o conteúdo atualizado
+            let jaRecarregou = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (jaRecarregou) return;
+                jaRecarregou = true;
+                window.location.reload();
+            });
         }
     </script>
 </body>
