@@ -120,11 +120,6 @@
                         <label>Palavra-passe</label>
                         <input type="password" id="regPassword" required placeholder="••••••••">
                     </div>
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="isAdmin"> Sou Administrador
-                        </label>
-                    </div>
                     <button type="submit" class="btn btn-success">Criar Conta</button>
                 </form>
                 <button type="button" class="btn btn-secondary" onclick="toggleRegister()">Voltar</button>
@@ -544,14 +539,13 @@
             const name = document.getElementById('regName').value;
             const email = document.getElementById('regEmail').value;
             const password = document.getElementById('regPassword').value;
-            const supervisor = document.getElementById('isAdmin').checked;
             try {
                 const result = await auth.createUserWithEmailAndPassword(email, password);
                 await result.user.updateProfile({ displayName: name });
                 await db.collection('users').doc(result.user.uid).set({
                     name: name,
                     email: email,
-                    isAdmin: supervisor,
+                    isAdmin: false,
                     ativo: true,
                     createdAt: new Date()
                 });
