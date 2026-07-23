@@ -92,6 +92,14 @@
     </style>
 </head>
 <body>
+    <!-- ECRÃ DE CARREGAMENTO: mostra-se por instantes enquanto a app verifica
+         se já existe uma sessão guardada (funciona mesmo offline) -->
+    <div id="loadingScreen" style="position:fixed; inset:0; z-index:3000; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(135deg, #9D212B 0%, #7A1A21 100%); color:white;">
+        <div style="width:40px; height:40px; border:4px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; animation:girar 0.8s linear infinite;"></div>
+        <div style="margin-top:16px; font-size:13px;">A verificar sessão...</div>
+    </div>
+    <style>@keyframes girar { to { transform: rotate(360deg); } }</style>
+
     <!-- LOGIN SCREEN -->
     <div id="loginScreen" class="login-container">
         <div class="login-box">
@@ -390,6 +398,17 @@
         const db = firebase.firestore();
         const storage = firebase.storage();
 
+        // ===== OFFLINE: MANTER A SESSÃO DE LOGIN GUARDADA NO TELEMÓVEL =====
+        // Isto garante que, depois de entrar UMA VEZ com rede, a app reconhece
+        // o utilizador automaticamente nas vezes seguintes — mesmo sem internet.
+        // (Sem isto, em alguns navegadores/instalações a sessão podia não ficar
+        // guardada de forma fiável, obrigando a tentar fazer login sempre que
+        // a app abria, o que falha sem rede porque não há como validar a
+        // password com o servidor sem internet.)
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch((err) => {
+            console.warn('Não foi possível definir persistência local:', err.message);
+        });
+
         // ===== OFFLINE: ATIVAR PERSISTÊNCIA DO FIRESTORE =====
         db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
             console.warn('Persistência offline indisponível:', err.code);
@@ -593,6 +612,7 @@
 
         // AUTH LISTENER
         auth.onAuthStateChanged(user => {
+            document.getElementById('loadingScreen').style.display = 'none';
             if (user) {
                 currentUser = user;
                 checkIfAdmin();
@@ -601,15 +621,35 @@
             }
         });
 
+        // Segurança: se por algum motivo o Firebase demorar muito a responder
+        // (ex: rede muito lenta), não deixar o ecrã de carregamento preso para sempre
+        setTimeout(() => {
+            const loading = document.getElementById('loadingScreen');
+            if (loading && loading.style.display !== 'none') {
+                loading.style.display = 'none';
+                if (!currentUser) showLoginScreen();
+            }
+        }, 6000);
+
         // LOGIN
         document.getElementById('formLogin').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
+
+            if (!navigator.onLine) {
+                showError('📴 Sem rede. Para entrar pela primeira vez neste telemóvel precisa de internet (só uma vez — depois disso a sessão fica guardada e funciona sempre offline).');
+                return;
+            }
+
             try {
                 await auth.signInWithEmailAndPassword(email, password);
             } catch (error) {
-                showError('Erro: ' + error.message);
+                if (error.code === 'auth/network-request-failed') {
+                    showError('📴 Sem rede suficiente para validar o login. Tente novamente com melhor sinal.');
+                } else {
+                    showError('Erro: ' + error.message);
+                }
             }
         });
 

@@ -1,5 +1,5 @@
 // MozCommunity Service Worker v13 - Rede primeiro (sempre atualizado), cache como reserva offline
-const CACHE_NAME = 'mozcommunity-v13';
+const CACHE_NAME = 'mozcommunity-v14';
 const urlsToCache = [
   './',
   './index.html',
